@@ -1,0 +1,443 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Any
+
+
+@dataclass
+class Route:
+    route_id: str
+    name: str
+    location: str
+    distance_miles: float
+    elevation_gain: float
+    surface_type: str
+    shade_pct: float               # 0-100
+    scenic_likelihood: float       # 0-1
+    proximity_miles: float
+    route_type: str
+    popularity: float              # 0-100 (optional signal)
+    difficulty: str
+    technicality: str
+
+
+# Band thresholds (your spec)
+BAND_1_MIN = 85.00
+BAND_2_MIN = 55.00
+BAND_3_MIN = 40.00  # below this is not recommended
+
+
+# Weights sum to 1.00
+DEFAULT_WEIGHTS = {
+    "mileage": 0.32,
+    "elevation": 0.20,
+    "views": 0.16,
+    "proximity": 0.10,
+    "shade": 0.10,
+    "crowds": 0.12,
+}
+
+
+def _clamp(x: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, x))
+
+
+def _norm_text(s: Optional[str]) -> str:
+    return " ".join(str(s or "").strip().lower().split())
+
+
+def _location_match(route_loc: str, user_loc: str) -> bool:
+    """
+    v1 location gate: forgiving string match (no geometry).
+    Accept if either string contains the other after normalization.
+    """
+    rl = _norm_text(route_loc)
+    ul = _norm_text(user_loc)
+    if not ul:
+        return True
+    if not rl:
+        return False
+    return (ul in rl) or (rl in ul)
+
+
+# ------------------------------------------------------------
+# Scenic likelihood inference (NEW)
+# ------------------------------------------------------------
+
+_SCENIC_KEYWORDS = [
+    "peak", "summit", "ridge", "ridgeline", "lookout", "vista", "overlook", "panorama",
+    "view", "views", "scenic",
+    "canyon", "falls", "waterfall", "creek", "lake", "reservoir",
+    "meadow", "bluff", "point",
+]
+
+def _infer_scenic_likelihood(route: Route) -> float:
+    """
+    Derive a scenic likelihood estimate from existing route attributes.
+    Returns 0..1.
+
+    Signals:
+      - elevation gain per mile (proxy for getting high / viewpoints)
+      - popularity (proxy for "people go here for a reason")
+      - name keywords ("peak", "ridge", "vista", etc.)
+      - route_type (loops slightly favored)
+    """
+    # --- Gain per mile: normalize into 0..1
+    miles = max(0.1, float(route.distance_miles))
+    elev = max(0.0, float(route.elevation_gain))
+    gpm = elev / miles  # ft per mile
+
+    # Typical ranges: ~0–900+ ft/mi depending on region/routes
+    # Below ~100 ft/mi is usually not "view-driven". Above ~700 ft/mi tends to imply climbs/ridges.
+    gpm_norm = _clamp((gpm - 100.0) / 600.0, 0.0, 1.0)
+
+    # --- Popularity: 0..1
+    pop_norm = _clamp(float(route.popularity) / 100.0, 0.0, 1.0)
+
+    # --- Name keyword bonus
+    name = _norm_text(route.name)
+    kw_hits = 0
+    for kw in _SCENIC_KEYWORDS:
+        if kw in name:
+            kw_hits += 1
+    # Cap keyword influence (avoid "Vista Vista Vista" dominating)
+    kw_bonus = _clamp(0.10 * kw_hits, 0.0, 0.35)
+
+    # --- Route type mild bonus
+    rt = _norm_text(route.route_type)
+    loop_bonus = 0.05 if ("loop" in rt) else 0.0
+
+    # --- Difficulty/technicality mild scenic correlation (optional but safe)
+    diff = _norm_text(route.difficulty)
+    tech = _norm_text(route.technicality)
+    hard_bonus = 0.03 if any(x in diff for x in ["hard", "difficult"]) else 0.0
+    tech_bonus = 0.03 if any(x in tech for x in ["technical", "rocky"]) else 0.0
+
+    # Weighted blend (tuned to be conservative)
+    inferred = (
+        0.15
+        + 0.50 * gpm_norm
+        + 0.20 * pop_norm
+        + kw_bonus
+        + loop_bonus
+        + hard_bonus
+        + tech_bonus
+    )
+
+    return _clamp(inferred, 0.0, 1.0)
+
+
+def _effective_scenic(route: Route) -> float:
+    """
+    Use the best available scenic value:
+      - keep dataset value if it's good
+      - otherwise "rescue" using inference
+    We never reduce scenic likelihood.
+    """
+    try:
+        base = _clamp(float(route.scenic_likelihood), 0.0, 1.0)
+    except Exception:
+        base = 0.0
+    inferred = _infer_scenic_likelihood(route)
+    return max(base, inferred)
+
+
+def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: int = 0) -> float:
+    """
+    Mileage: primary soft dimension.
+    Supports target_miles OR (min_mileage/max_mileage).
+    Outside the band decays (not hard cutoff).
+    """
+    m = float(distance_miles)
+    relax_factor = 1.0 + min(0.50, 0.10 * max(0, relax_level))
+
+    if prefs.get("target_miles") is not None:
+        t = float(prefs["target_miles"])
+        tol = max(0.75, 0.15 * max(t, 1e-6)) * relax_factor
+        return _clamp(1.0 - abs(m - t) / tol, 0.0, 1.0)
+
+    min_m = float(prefs.get("min_mileage", 0.0))
+    max_m = float(prefs.get("max_mileage", 100.0))
+    if max_m < min_m:
+        min_m, max_m = max_m, min_m
+
+    mid = (min_m + max_m) / 2.0
+    half = max(0.1, (max_m - min_m) / 2.0)
+
+    if min_m <= m <= max_m:
+        return _clamp(1.0 - abs(m - mid) / half, 0.0, 1.0)
+
+    dist_to_range = (min_m - m) if m < min_m else (m - max_m)
+    tol_outside = max(1.0, 0.20 * max(mid, 1.0)) * relax_factor
+    return _clamp(1.0 - dist_to_range / tol_outside, 0.0, 1.0)
+
+
+def _elevation_score(
+    distance_miles: float,
+    elevation_gain: float,
+    prefs: Dict[str, Any],
+    relax_level: int = 0,
+) -> Tuple[float, float, float]:
+    """
+    Elevation: "no surprises"
+      - total gain alignment
+      - steepness proxy using ft-per-mile to avoid surprise steep routes
+
+    Returns: (elevation_score, elev_gain_score, steepness_score)
+    """
+    e = float(elevation_gain)
+    m = max(0.1, float(distance_miles))
+    gain_per_mile = e / m
+
+    relax_factor = 1.0 + min(0.75, 0.15 * max(0, relax_level))
+
+    max_elev = prefs.get("max_elevation", None)
+    target_elev = prefs.get("target_elevation_gain", None)
+
+    # Total gain score
+    if target_elev is not None:
+        t = float(target_elev)
+        tol = max(150.0, 0.25 * max(t, 1.0)) * relax_factor
+        elev_gain_score = _clamp(1.0 - abs(e - t) / tol, 0.0, 1.0)
+        expected_gain = t
+    elif max_elev is not None:
+        me = float(max_elev)
+        if me <= 0:
+            elev_gain_score = 0.0
+            expected_gain = 0.0
+        else:
+            overshoot = max(0.0, e - me)
+            tol = max(150.0, 0.25 * me) * relax_factor
+            elev_gain_score = _clamp(1.0 - overshoot / tol, 0.0, 1.0)
+            expected_gain = me
+    else:
+        elev_gain_score = 0.6
+        expected_gain = None
+
+    # Steepness score (ft/mi proxy)
+    if expected_gain is not None:
+        if prefs.get("target_miles") is not None:
+            expected_miles = max(1.0, float(prefs["target_miles"]))
+        else:
+            expected_miles = max(
+                1.0,
+                (float(prefs.get("min_mileage", 0.0)) + float(prefs.get("max_mileage", 100.0))) / 2.0,
+            )
+
+        max_ft_per_mile = max(50.0, float(expected_gain) / expected_miles)
+        steep_overshoot = max(0.0, gain_per_mile - max_ft_per_mile)
+        steep_tol = max(100.0, 0.35 * max_ft_per_mile) * relax_factor
+        steepness_score = _clamp(1.0 - steep_overshoot / steep_tol, 0.0, 1.0)
+    else:
+        steepness_score = 0.6
+
+    elevation_score = 0.65 * elev_gain_score + 0.35 * steepness_score
+    return (_clamp(elevation_score, 0.0, 1.0), elev_gain_score, steepness_score)
+
+
+def _views_score(effective_scenic_likelihood: float, prefs: Dict[str, Any]) -> float:
+    v = _clamp(float(effective_scenic_likelihood), 0.0, 1.0)
+    vp = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
+    return _clamp(1.0 - abs(v - vp), 0.0, 1.0)
+
+
+def _shade_score(shade_pct: float, prefs: Dict[str, Any]) -> float:
+    s = _clamp(float(shade_pct) / 100.0, 0.0, 1.0)
+    sp = _clamp(float(prefs.get("shade_preference", 0.5)), 0.0, 1.0)
+    return _clamp(1.0 - abs(s - sp), 0.0, 1.0)
+
+
+def _crowds_score(popularity_0_100: float, prefs: Dict[str, Any]) -> float:
+    p = _clamp(float(popularity_0_100) / 100.0, 0.0, 1.0)
+    mode = str(prefs.get("crowds_preference", "balanced") or "balanced").strip().lower()
+
+    if mode == "popular":
+        return p
+    if mode == "secluded":
+        return 1.0 - p
+    return _clamp(1.0 - 2.0 * abs(p - 0.5), 0.0, 1.0)
+
+
+def _proximity_soft_score(route_prox: float, max_prox: float) -> float:
+    if max_prox <= 0:
+        return 0.0
+    return _clamp(1.0 - (float(route_prox) / float(max_prox)), 0.0, 1.0)
+
+
+def _normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
+    w = {k: float(v) for k, v in (weights or {}).items() if float(v) >= 0.0}
+    total = sum(w.values())
+    if total <= 0:
+        return dict(DEFAULT_WEIGHTS)
+    if 0.98 <= total <= 1.02:
+        return w
+    return {k: (v / total) for k, v in w.items()}
+
+
+def _score_band(conformity_score: float) -> Optional[str]:
+    s = float(conformity_score)
+    if s >= BAND_1_MIN:
+        return "band_1"
+    if s >= BAND_2_MIN:
+        return "band_2"
+    if s >= BAND_3_MIN:
+        return "band_3"
+    return None
+
+
+def select_routes(
+    routes: List[Route],
+    preferences: Dict[str, Any],
+    weights: Optional[Dict[str, float]] = None,
+) -> List[Dict[str, Any]]:
+    """
+    Hard constraints first, then soft scoring.
+    Returns list of dicts:
+      {route_id, name, conformity_score, score_band, sub_scores, explanation_bits}
+    """
+    prefs = dict(preferences or {})
+    w = _normalize_weights(DEFAULT_WEIGHTS if weights is None else weights)
+
+    user_location = prefs.get("location")
+    max_prox = float(prefs.get("max_proximity", 20.0))
+
+    allowed_surfaces = prefs.get("allowed_surface_types")
+    preferred_surface = prefs.get("preferred_surface")
+
+    relax_level = int(prefs.get("relax_level", 0) or 0)
+
+    # --- Progressive relaxation: allow a SMALL overflow beyond max_prox after a few "more"
+    prox_overflow = 0.0
+    if relax_level >= 2:
+        prox_overflow = min(10.0, 2.0 * relax_level)
+
+    # Hard gates
+    candidates: List[Route] = []
+    for r in routes:
+        if r.proximity_miles > (max_prox + prox_overflow):
+            continue
+
+        if user_location is not None and str(user_location).strip():
+            if not _location_match(r.location, str(user_location)):
+                continue
+
+        if allowed_surfaces:
+            try:
+                if r.surface_type not in allowed_surfaces:
+                    continue
+            except TypeError:
+                pass
+        elif preferred_surface and str(preferred_surface).strip().lower() != "mixed":
+            if r.surface_type != preferred_surface:
+                continue
+
+        candidates.append(r)
+
+    if not candidates:
+        return []
+
+    views_pref = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
+    scenic_offsets_elev = (views_pref >= 0.6)
+    scenic_bonus_factor = 0.25
+
+    results: List[Dict[str, Any]] = []
+    for r in candidates:
+        sub: Dict[str, float] = {}
+
+        # Compute inferred/augmented scenic value once per route
+        scenic_eff = _effective_scenic(r)
+
+        sub["mileage"] = _mileage_score(r.distance_miles, prefs, relax_level=relax_level)
+
+        elev_score, elev_gain_score, steep_score = _elevation_score(
+            r.distance_miles, r.elevation_gain, prefs, relax_level=relax_level
+        )
+        if scenic_offsets_elev:
+            elev_score = _clamp(
+                elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
+                0.0,
+                1.0,
+            )
+
+        sub["elevation"] = elev_score
+        sub["elev_gain"] = _clamp(elev_gain_score, 0.0, 1.0)
+        sub["steepness"] = _clamp(steep_score, 0.0, 1.0)
+
+        sub["views"] = _views_score(scenic_eff, prefs)
+        sub["shade"] = _shade_score(r.shade_pct, prefs)
+        sub["proximity"] = _proximity_soft_score(r.proximity_miles, max_prox)
+        sub["crowds"] = _crowds_score(r.popularity, prefs)
+
+        score_0_1 = 0.0
+        score_0_1 += w.get("mileage", 0.0) * sub["mileage"]
+        score_0_1 += w.get("elevation", 0.0) * sub["elevation"]
+        score_0_1 += w.get("views", 0.0) * sub["views"]
+        score_0_1 += w.get("shade", 0.0) * sub["shade"]
+        score_0_1 += w.get("proximity", 0.0) * sub["proximity"]
+        score_0_1 += w.get("crowds", 0.0) * sub["crowds"]
+
+        conformity = round(_clamp(score_0_1, 0.0, 1.0) * 100.0, 2)
+
+        band = _score_band(conformity)
+        if band is None:
+            continue
+
+        # ============================================================
+        # Explanation bits (2–3 max) — aligned to UI language
+        # ============================================================
+        explain: List[str] = []
+
+        if r.proximity_miles <= max_prox:
+            explain.append("close by" if sub["proximity"] >= 0.75 else "nearby")
+        else:
+            explain.append("a bit farther")
+
+        if sub["mileage"] >= 0.85:
+            explain.append("mileage match")
+        elif sub["mileage"] >= 0.65:
+            explain.append(f"about {round(r.distance_miles, 1)} miles")
+        else:
+            if relax_level >= 2:
+                explain.append("slightly outside target")
+
+        if sub["elevation"] >= 0.85:
+            explain.append("low elevation (no surprise)")
+        else:
+            if prefs.get("max_elevation") is not None:
+                if sub["elev_gain"] < 0.55 or sub["steepness"] < 0.55:
+                    explain.append("a bit more climb" if relax_level >= 2 else "more climb")
+
+        # Views + shade language (use scenic_eff)
+        if views_pref >= 0.7 and _clamp(scenic_eff, 0.0, 1.0) >= 0.7:
+            explain.append("big views")
+
+        shade_pref = _clamp(float(prefs.get("shade_preference", 0.5)), 0.0, 1.0)
+        if shade_pref >= 0.7 and _clamp(r.shade_pct / 100.0, 0.0, 1.0) >= 0.7:
+            explain.append("shady canopy")
+
+        crowd_mode = str(prefs.get("crowds_preference", "balanced") or "balanced").strip().lower()
+        p_norm = _clamp(r.popularity / 100.0, 0.0, 1.0)
+        if crowd_mode == "secluded" and p_norm <= 0.3:
+            explain.append("quiet trail")
+        elif crowd_mode == "popular" and p_norm >= 0.7:
+            explain.append("popular classic")
+
+        explain_unique: List[str] = []
+        for ebit in explain:
+            if ebit not in explain_unique:
+                explain_unique.append(ebit)
+            if len(explain_unique) >= 3:
+                break
+
+        results.append({
+            "route_id": r.route_id,
+            "name": r.name,
+            "conformity_score": conformity,
+            "score_band": band,
+            "sub_scores": sub,
+            "explanation_bits": explain_unique,
+        })
+
+    results.sort(key=lambda x: x["conformity_score"], reverse=True)
+    return results
+

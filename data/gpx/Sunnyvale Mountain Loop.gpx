@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Sunnyvale Mountain Loop</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3438730234545096852"/>
+ </metadata>
+ <trk>
+  <name>Sunnyvale Mountain Loop</name>
+  <link href="https://www.strava.com/routes/3438730234545096852"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.4191" lon="-122.01825000000001">
+    <ele>2.08</ele>
+   </trkpt>
+   <trkpt lat="37.41917" lon="-122.01846">
+    <ele>2.32</ele>
+   </trkpt>
+   <trkpt lat="37.41921" lon="-122.01854000000002">
+    <ele>2.5300000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41927000158134" lon="-122.01914999965621">
+    <ele>9.47</ele>
+   </trkpt>
+   <trkpt lat="37.41933" lon="-122.01976">
+    <ele>22.61</ele>
+   </trkpt>
+   <trkpt lat="37.41949" lon="-122.02021">
+    <ele>22.910000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.419610000000006" lon="-122.02068000000001">
+    <ele>24.740000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41969" lon="-122.02092">
+    <ele>25.17</ele>
+   </trkpt>
+   <trkpt lat="37.41991" lon="-122.02125000000001">
+    <ele>24.51</ele>
+   </trkpt>
+   <trkpt lat="37.42013" lon="-122.02173">
+    <ele>22.410000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.42027" lon="-122.02189000000001">
+    <ele>21.44</ele>
+   </trkpt>
+   <trkpt lat="37.420370000000005" lon="-122.02168">
+    <ele>21.040000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.4204" lon="-122.02141">
+    <ele>20.450000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.420280000000005" lon="-122.02071000000001">
+    <ele>17.35</ele>
+   </trkpt>
+   <trkpt lat="37.42014" lon="-122.02003">
+    <ele>15.850000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.420120000000004" lon="-122.01962">
+    <ele>14.620000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.42014" lon="-122.01918">
+    <ele>12.38</ele>
+   </trkpt>
+   <trkpt lat="37.420100000000005" lon="-122.019">
+    <ele>11.49</ele>
+   </trkpt>
+   <trkpt lat="37.42005" lon="-122.01891">
+    <ele>10.860000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.419990000000006" lon="-122.01886">
+    <ele>9.860000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41991" lon="-122.01882">
+    <ele>9.860000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41984" lon="-122.01881000000002">
+    <ele>9.860000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41962" lon="-122.01884000000001">
+    <ele>7.11</ele>
+   </trkpt>
+   <trkpt lat="37.419610000000006" lon="-122.01884000000001">
+    <ele>7.2</ele>
+   </trkpt>
+   <trkpt lat="37.41953" lon="-122.01886">
+    <ele>6.24</ele>
+   </trkpt>
+   <trkpt lat="37.41924" lon="-122.01886">
+    <ele>4.49</ele>
+   </trkpt>
+   <trkpt lat="37.41921" lon="-122.01854000000002">
+    <ele>2.5300000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41917" lon="-122.01846">
+    <ele>2.32</ele>
+   </trkpt>
+   <trkpt lat="37.4191" lon="-122.01825000000001">
+    <ele>2.08</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
