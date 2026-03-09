@@ -144,9 +144,12 @@ def _effective_scenic(route: Route) -> float:
 
 def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: int = 0) -> float:
     """
-    Mileage: primary soft dimension.
-    Supports target_miles OR (min_mileage/max_mileage).
-    Outside the band decays (not hard cutoff).
+    Two-zone mileage scoring.
+    Zone 1 (within tol): score 1.0 → 0.60  (never penalizes, just rewards closeness)
+    Zone 2 (outside tol): score 0.60 → negative  (actively pulls conformity down)
+    Negative scores are intentional — they propagate into the weighted sum so that
+    other dimensions cannot freely compensate for a bad distance match.
+    The final conformity display value is still clamped to 0 externally.
     """
     m = float(distance_miles)
     relax_factor = 1.0 + min(0.50, 0.10 * max(0, relax_level))
@@ -154,7 +157,12 @@ def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: in
     if prefs.get("target_miles") is not None:
         t = float(prefs["target_miles"])
         tol = max(0.75, 0.15 * max(t, 1e-6)) * relax_factor
-        return _clamp(1.0 - abs(m - t) / tol, 0.0, 1.0)
+        deviation = abs(m - t)
+        if deviation <= tol:
+            return 1.0 - (deviation / tol) * 0.40
+        overshoot = deviation - tol
+        score = 0.60 - (overshoot / tol) * 0.90
+        return _clamp(score, -0.40, 0.60)
 
     min_m = float(prefs.get("min_mileage", 0.0))
     max_m = float(prefs.get("max_mileage", 100.0))
@@ -165,11 +173,13 @@ def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: in
     half = max(0.1, (max_m - min_m) / 2.0)
 
     if min_m <= m <= max_m:
-        return _clamp(1.0 - abs(m - mid) / half, 0.0, 1.0)
+        deviation = abs(m - mid)
+        return 1.0 - (deviation / half) * 0.40
 
     dist_to_range = (min_m - m) if m < min_m else (m - max_m)
     tol_outside = max(1.0, 0.20 * max(mid, 1.0)) * relax_factor
-    return _clamp(1.0 - dist_to_range / tol_outside, 0.0, 1.0)
+    score = 0.60 - (dist_to_range / tol_outside) * 0.90
+    return _clamp(score, -0.40, 0.60)
 
 
 def _elevation_score(
@@ -335,6 +345,25 @@ def select_routes(
 
     if not candidates:
         return []
+
+    # Hard distance pre-filter — tiered window based on target distance
+    target_miles_val = prefs.get("target_miles", None)
+    if target_miles_val is not None:
+        t = float(target_miles_val)
+        if t < 4.0:
+            window_pct = 0.25
+        elif t < 10.0:
+            window_pct = 0.30
+        else:
+            window_pct = 0.40
+        if relax_level >= 2:
+            window_pct += 0.10
+        lower_bound = t * (1.0 - window_pct)
+        upper_bound = t * (1.0 + window_pct)
+        filtered = [r for r in candidates if lower_bound <= r.distance_miles <= upper_bound]
+        if filtered:
+            candidates = filtered
+        # else: fail-safe — filter would eliminate all candidates, keep full set
 
     views_pref = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
     scenic_offsets_elev = (views_pref >= 0.6)
