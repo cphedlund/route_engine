@@ -86,14 +86,27 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 continue
 
             # -------------------------
-            # Distance
+            # Distance + gradient profile
             # -------------------------
             dist = 0.0
+            grades: List[float] = []
             for i in range(1, len(pts)):
-                dist += haversine_miles(
+                seg_dist_miles = haversine_miles(
                     (pts[i - 1][0], pts[i - 1][1]),
                     (pts[i][0], pts[i][1]),
                 )
+                dist += seg_dist_miles
+
+                seg_dist_ft = seg_dist_miles * 5280.0
+                if (seg_dist_ft > 5.0
+                        and pts[i - 1][2] is not None
+                        and pts[i][2] is not None):
+                    elev_delta_ft = (pts[i][2] - pts[i - 1][2]) * 3.28084
+                    grade_pct = (elev_delta_ft / seg_dist_ft) * 100.0
+                    grades.append(abs(grade_pct))
+
+            max_grade_pct = min(100.0, max(grades)) if grades else 0.0
+            avg_grade_pct = min(100.0, sum(grades) / len(grades)) if grades else 0.0
 
             # -------------------------
             # Elevation gain (meters → feet)
@@ -112,6 +125,17 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
 
             lat_avg = sum(p[0] for p in pts) / len(pts)
             lon_avg = sum(p[1] for p in pts) / len(pts)
+
+            # Loop detection
+            if len(pts) >= 2:
+                first_pt = (pts[0][0], pts[0][1])
+                last_pt  = (pts[-1][0], pts[-1][1])
+                gap_miles = haversine_miles(first_pt, last_pt)
+                route_type  = "loop" if gap_miles <= 0.10 else "out-and-back"
+                start_point = first_pt
+            else:
+                route_type  = "unknown"
+                start_point = (lat_avg, lon_avg)
 
             raw_name = getattr(gpx, "name", None) or path.stem
             name = normalize_name(str(raw_name))
@@ -132,13 +156,18 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 "shade_pct": 0,
                 "scenic_likelihood": 0,
                 "proximity_miles": 0,
-                "route_type": "unknown",
+                "route_type": route_type,
                 "popularity": 0,
                 "difficulty": "unknown",
                 "technicality": "unknown",
 
+                # Computed gradient profile
+                "max_grade_pct": round(max_grade_pct, 1),
+                "avg_grade_pct": round(avg_grade_pct, 1),
+
                 # Internal-only fields
                 "_centroid": (lat_avg, lon_avg),
+                "_start_point": start_point,
                 "_path": str(path),
             })
 

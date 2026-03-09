@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Any
 
+from gpx_loader import haversine_miles
+
 
 @dataclass
 class Route:
@@ -19,6 +21,10 @@ class Route:
     popularity: float              # 0-100 (optional signal)
     difficulty: str
     technicality: str
+    # Computed at load time from GPX data (optional — default for legacy data)
+    max_grade_pct: Optional[float] = 0.0
+    avg_grade_pct: Optional[float] = 0.0
+    _start_point: Optional[Tuple[float, float]] = None
 
 
 # Band thresholds (your spec)
@@ -284,6 +290,38 @@ def _normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
     return {k: (v / total) for k, v in w.items()}
 
 
+def _gradient_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """Score steepness using real per-segment grade data from GPX."""
+    max_gain_m = prefs.get("max_gain_m", None)
+    if max_gain_m is None:
+        return 0.6  # neutral when no preference
+
+    target_miles = prefs.get("target_miles", None)
+    if target_miles and float(target_miles) > 0:
+        expected_ft_per_mile = (float(max_gain_m) * 3.28084) / max(1.0, float(target_miles))
+        expected_max_grade = (expected_ft_per_mile / 5280.0) * 100.0
+    else:
+        gain_m = float(max_gain_m)
+        if gain_m <= 50:    expected_max_grade = 1.0
+        elif gain_m <= 150: expected_max_grade = 3.0
+        elif gain_m <= 300: expected_max_grade = 5.0
+        elif gain_m <= 500: expected_max_grade = 8.0
+        else:               expected_max_grade = 12.0
+
+    max_grade = float(route.max_grade_pct or 0.0)
+    avg_grade = float(route.avg_grade_pct or 0.0)
+
+    overshoot_max = max(0.0, max_grade - expected_max_grade * 1.5)
+    tol_max = max(1.0, expected_max_grade * 0.5)
+    max_grade_score = _clamp(1.0 - overshoot_max / tol_max, 0.0, 1.0)
+
+    overshoot_avg = max(0.0, avg_grade - expected_max_grade)
+    tol_avg = max(1.0, expected_max_grade * 0.4)
+    avg_grade_score = _clamp(1.0 - overshoot_avg / tol_avg, 0.0, 1.0)
+
+    return _clamp(0.55 * max_grade_score + 0.45 * avg_grade_score, 0.0, 1.0)
+
+
 def _score_band(conformity_score: float) -> Optional[str]:
     s = float(conformity_score)
     if s >= BAND_1_MIN:
@@ -316,6 +354,11 @@ def select_routes(
 
     relax_level = int(prefs.get("relax_level", 0) or 0)
 
+    # User coordinates for live haversine proximity
+    user_lat = prefs.get("lat", None)
+    user_lng = prefs.get("lng", None)
+    has_user_location = (user_lat is not None and user_lng is not None)
+
     # --- Progressive relaxation: allow a SMALL overflow beyond max_prox after a few "more"
     prox_overflow = 0.0
     if relax_level >= 2:
@@ -324,7 +367,11 @@ def select_routes(
     # Hard gates
     candidates: List[Route] = []
     for r in routes:
-        if r.proximity_miles > (max_prox + prox_overflow):
+        if has_user_location and r._start_point is not None:
+            live_prox = haversine_miles((user_lat, user_lng), r._start_point)
+        else:
+            live_prox = r.proximity_miles
+        if live_prox > (max_prox + prox_overflow):
             continue
 
         if user_location is not None and str(user_location).strip():
@@ -345,6 +392,16 @@ def select_routes(
 
     if not candidates:
         return []
+
+    # Intent gate — loop / out-and-back hard filter
+    intent = prefs.get("intent", None)
+    if intent:
+        intent_lower = intent.strip().lower()
+        if intent_lower in ("loop", "out-and-back"):
+            intent_filtered = [r for r in candidates if r.route_type == intent_lower]
+            if intent_filtered:
+                candidates = intent_filtered
+            # else: fail-safe — keep full candidate set
 
     # Hard distance pre-filter — tiered window based on target distance
     target_miles_val = prefs.get("target_miles", None)
@@ -373,6 +430,12 @@ def select_routes(
     for r in candidates:
         sub: Dict[str, float] = {}
 
+        # Live proximity for this route
+        if has_user_location and r._start_point is not None:
+            live_prox = haversine_miles((user_lat, user_lng), r._start_point)
+        else:
+            live_prox = r.proximity_miles
+
         # Compute inferred/augmented scenic value once per route
         scenic_eff = _effective_scenic(r)
 
@@ -381,20 +444,23 @@ def select_routes(
         elev_score, elev_gain_score, steep_score = _elevation_score(
             r.distance_miles, r.elevation_gain, prefs, relax_level=relax_level
         )
+
+        gradient = _gradient_score(r, prefs)
+        new_elev_score = _clamp(0.65 * elev_gain_score + 0.35 * gradient, 0.0, 1.0)
         if scenic_offsets_elev:
-            elev_score = _clamp(
-                elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
+            new_elev_score = _clamp(
+                new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
                 0.0,
                 1.0,
             )
 
-        sub["elevation"] = elev_score
+        sub["elevation"] = new_elev_score
         sub["elev_gain"] = _clamp(elev_gain_score, 0.0, 1.0)
-        sub["steepness"] = _clamp(steep_score, 0.0, 1.0)
+        sub["steepness"] = gradient
 
         sub["views"] = _views_score(scenic_eff, prefs)
         sub["shade"] = _shade_score(r.shade_pct, prefs)
-        sub["proximity"] = _proximity_soft_score(r.proximity_miles, max_prox)
+        sub["proximity"] = _proximity_soft_score(live_prox, max_prox)
         sub["crowds"] = _crowds_score(r.popularity, prefs)
 
         score_0_1 = 0.0
@@ -416,7 +482,7 @@ def select_routes(
         # ============================================================
         explain: List[str] = []
 
-        if r.proximity_miles <= max_prox:
+        if live_prox <= max_prox:
             explain.append("close by" if sub["proximity"] >= 0.75 else "nearby")
         else:
             explain.append("a bit farther")
@@ -461,6 +527,9 @@ def select_routes(
         results.append({
             "route_id": r.route_id,
             "name": r.name,
+            "route_type": r.route_type,
+            "max_grade_pct": r.max_grade_pct,
+            "avg_grade_pct": r.avg_grade_pct,
             "conformity_score": conformity,
             "score_band": band,
             "sub_scores": sub,

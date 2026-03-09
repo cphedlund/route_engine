@@ -198,6 +198,8 @@ class Preferences(BaseModel):
     avoid: Optional[List[str]] = None
     priorities: Optional[Dict[str, float]] = None  # e.g. {"views":0.8,"shade":0.5}
     must: Optional[Dict[str, bool]] = None         # e.g. {"loop": True}
+    lat: Optional[float] = None                    # user coordinates for live proximity
+    lng: Optional[float] = None
 
 class StartSearchBody(BaseModel):
     query: str
@@ -224,9 +226,18 @@ class RouteIn(BaseModel):
     popularity: float = 0.0
     difficulty: str = "unknown"
     technicality: str = "unknown"
+    max_grade_pct: float = 0.0
+    avg_grade_pct: float = 0.0
+    start_lat: Optional[float] = None
+    start_lng: Optional[float] = None
 
     def to_engine_route(self) -> Route:
-        return Route(**self.model_dump())
+        d = self.model_dump()
+        start_lat = d.pop("start_lat", None)
+        start_lng = d.pop("start_lng", None)
+        if start_lat is not None and start_lng is not None:
+            d["_start_point"] = (float(start_lat), float(start_lng))
+        return Route(**d)
 
 
 class StartSearchRequest(BaseModel):
@@ -251,6 +262,11 @@ def _strip_internal(d: dict) -> dict:
     d = dict(d)
     d.pop("_centroid", None)
     d.pop("_path", None)
+    # Convert _start_point tuple to flat fields RouteIn can accept
+    sp = d.pop("_start_point", None)
+    if sp is not None:
+        d["start_lat"] = sp[0]
+        d["start_lng"] = sp[1]
     return d
 
 
@@ -374,6 +390,13 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
             prefs["max_proximity"] = 10.0
         elif _contains_any(q, ["far", "worth the drive", "drive", "day trip"]):
             prefs["max_proximity"] = 35.0
+
+    # Route shape intent
+    if prefs.get("intent") is None:
+        if _contains_any(q, ["loop", "loop trail", "circular"]):
+            prefs["intent"] = "loop"
+        elif _contains_any(q, ["out and back", "out-and-back", "there and back"]):
+            prefs["intent"] = "out-and-back"
 
     return prefs
 
