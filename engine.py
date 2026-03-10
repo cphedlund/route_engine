@@ -422,6 +422,29 @@ def select_routes(
             candidates = filtered
         # else: fail-safe — filter would eliminate all candidates, keep full set
 
+    # ── Bounding-box geographic filter ──────────────────────────────
+    bbox_min_lat = prefs.get("bbox_min_lat")
+    bbox_min_lng = prefs.get("bbox_min_lng")
+    bbox_max_lat = prefs.get("bbox_max_lat")
+    bbox_max_lng = prefs.get("bbox_max_lng")
+    has_bbox = all(v is not None for v in [bbox_min_lat, bbox_min_lng, bbox_max_lat, bbox_max_lng])
+    if has_bbox:
+        bbox_min_lat = float(bbox_min_lat)
+        bbox_min_lng = float(bbox_min_lng)
+        bbox_max_lat = float(bbox_max_lat)
+        bbox_max_lng = float(bbox_max_lng)
+        # Routes without _start_point are kept (can't filter them)
+        bbox_filtered = [
+            r for r in candidates
+            if r._start_point is None or (
+                bbox_min_lat <= r._start_point[0] <= bbox_max_lat and
+                bbox_min_lng <= r._start_point[1] <= bbox_max_lng
+            )
+        ]
+        # Fail-safe: if filter wipes everything, keep original candidates
+        if bbox_filtered:
+            candidates = bbox_filtered
+
     views_pref = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
     scenic_offsets_elev = (views_pref >= 0.6)
     scenic_bonus_factor = 0.25
