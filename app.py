@@ -19,17 +19,14 @@ from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-
 from gpx_loader import load_routes_from_gpx_dir
 from engine import Route, select_routes
-
 import os
 from fastapi import Header, HTTPException
 
 # -----------------------------
 # App + CORS
 # -----------------------------
-
 app = FastAPI(title="Route Selection Engine")
 
 ALLOWED_ORIGINS = [
@@ -52,9 +49,9 @@ app.add_middleware(
 # -----------------------------
 # API Key Auth
 # -----------------------------
-
 API_KEY = os.getenv("ROUTE_ENGINE_API_KEY", "")
 DEV_MODE = os.getenv("DEV_MODE", "0") == "1"
+
 print("[DEBUG] ROUTE_ENGINE_API_KEY length:", len(API_KEY))
 
 
@@ -68,7 +65,6 @@ def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Ke
 # -----------------------------
 # Optional OpenAI LLM Translation
 # -----------------------------
-
 LLM_TRANSLATION_ENABLED = os.getenv("LLM_TRANSLATION_ENABLED", "0") == "1"
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 OPENAI_TIMEOUT_SECONDS = float(os.getenv("OPENAI_TIMEOUT_SECONDS", "6.0"))
@@ -125,7 +121,6 @@ def _norm_text(s: Optional[str]) -> str:
 # -----------------------------
 # Stateless session token
 # -----------------------------
-
 SESSION_SECRET = os.getenv("ROUTE_ENGINE_SESSION_SECRET", "")
 if not SESSION_SECRET and DEV_MODE:
     SESSION_SECRET = "dev-session-secret"
@@ -163,31 +158,30 @@ def read_session_token(token: str, max_age_seconds: int = 3600) -> Dict[str, Any
         payload_b64, sig_b64 = token.split(".", 1)
     except ValueError:
         raise HTTPException(status_code=401, detail="Invalid session_id token")
-
     expected = _sign(payload_b64)
     if not hmac.compare_digest(expected, sig_b64):
         raise HTTPException(status_code=401, detail="Invalid session_id token")
-
     try:
         data = json.loads(_b64url_decode(payload_b64).decode("utf-8"))
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid session_id token")
-
     created_at = int(data.get("created_at", 0) or 0)
     now = int(time.time())
     if created_at <= 0 or (now - created_at) > max_age_seconds:
         raise HTTPException(status_code=401, detail="Session expired")
-
     return data
+
 
 class LocationPref(BaseModel):
     lat: float
     lng: float
     radius_km: float = 20
 
+
 class RangePref(BaseModel):
     min: Optional[float] = None
     max: Optional[float] = None
+
 
 class Preferences(BaseModel):
     intent: Optional[Literal["run", "hike", "bike"]] = None
@@ -197,9 +191,10 @@ class Preferences(BaseModel):
     surface: Optional[List[str]] = None
     avoid: Optional[List[str]] = None
     priorities: Optional[Dict[str, float]] = None  # e.g. {"views":0.8,"shade":0.5}
-    must: Optional[Dict[str, bool]] = None         # e.g. {"loop": True}
-    lat: Optional[float] = None                    # user coordinates for live proximity
+    must: Optional[Dict[str, bool]] = None          # e.g. {"loop": True}
+    lat: Optional[float] = None  # user coordinates for live proximity
     lng: Optional[float] = None
+
 
 class StartSearchBody(BaseModel):
     query: str
@@ -208,10 +203,11 @@ class StartSearchBody(BaseModel):
     min_conformity: int = 85
     session_id: Optional[str] = None
     new_search: bool = False
+
+
 # -----------------------------
 # Models
 # -----------------------------
-
 class RouteIn(BaseModel):
     route_id: str
     name: str
@@ -257,7 +253,6 @@ class MoreResultsIn(BaseModel):
 # -----------------------------
 # Data
 # -----------------------------
-
 def _strip_internal(d: dict) -> dict:
     d = dict(d)
     d.pop("_centroid", None)
@@ -278,7 +273,6 @@ print(f"[GPX] Loaded {len(ROUTE_DB)} routes")
 # -----------------------------
 # Rules-based translator
 # -----------------------------
-
 def _percentile(values: List[float], p: float) -> float:
     if not values:
         return 0.0
@@ -312,14 +306,13 @@ def _contains_any(text: str, words: List[str]) -> bool:
 
 
 _MILES = [float(r.distance_miles) for r in ROUTE_DB]
-_ELEV = [float(r.elevation_gain) for r in ROUTE_DB]
+_ELEV  = [float(r.elevation_gain) for r in ROUTE_DB]
 
 MILES_P25 = _percentile(_MILES, 25)
 MILES_P75 = _percentile(_MILES, 75)
 MILES_P90 = _percentile(_MILES, 90)
-
-ELEV_P25 = _percentile(_ELEV, 25)
-ELEV_P75 = _percentile(_ELEV, 75)
+ELEV_P25  = _percentile(_ELEV, 25)
+ELEV_P75  = _percentile(_ELEV, 75)
 
 
 def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -344,7 +337,6 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
             elif "mile" in q or re.search(r"\bmi\b", q):
                 miles_from_text = n
             else:
-                # Ambiguous number; assume miles (LLM fallback handles time)
                 miles_from_text = n
 
     if miles_from_text is not None and prefs.get("target_miles") is None and (
@@ -398,23 +390,27 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
         elif _contains_any(q, ["out and back", "out-and-back", "there and back"]):
             prefs["intent"] = "out-and-back"
 
+    # Difficulty preference (NEW - 1b)
+    if prefs.get("difficulty_preference") is None:
+        if _contains_any(q, ["easy", "beginner", "gentle", "simple", "relaxed", "chill", "mellow"]):
+            prefs["difficulty_preference"] = "easy"
+        elif _contains_any(q, ["moderate", "intermediate", "medium"]):
+            prefs["difficulty_preference"] = "moderate"
+        elif _contains_any(q, ["hard", "difficult", "challenging", "strenuous", "tough"]):
+            prefs["difficulty_preference"] = "hard"
+        elif _contains_any(q, ["extreme", "expert", "very hard", "brutal", "grueling"]):
+            prefs["difficulty_preference"] = "very hard"
+
     return prefs
 
 
 def _prefs_have_enough_signal(prefs: Dict[str, Any]) -> bool:
     keys = [
-        "target_miles",
-        "min_mileage",
-        "max_mileage",
-        "target_elevation_gain",
-        "max_elevation",
-        "shade_preference",
-        "views_preference",
-        "crowds_preference",
-        "max_proximity",
-        "preferred_surface",
-        "allowed_surface_types",
-        "location",
+        "target_miles", "min_mileage", "max_mileage",
+        "target_elevation_gain", "max_elevation",
+        "shade_preference", "views_preference", "crowds_preference",
+        "max_proximity", "preferred_surface", "allowed_surface_types",
+        "location", "difficulty_preference",
     ]
     count = 0
     for k in keys:
@@ -491,9 +487,16 @@ def _validate_and_clamp_prefs(p: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(loc, str) and loc.strip():
         out["location"] = loc.strip()
 
+    # Difficulty preference validation (NEW - 1b)
+    dp = p.get("difficulty_preference")
+    if isinstance(dp, str):
+        dpn = dp.strip().lower()
+        if dpn in {"easy", "moderate", "hard", "very hard"}:
+            out["difficulty_preference"] = dpn
+
     w = p.get("weights")
     if isinstance(w, dict):
-        allowed = {"mileage", "elevation", "views", "proximity", "shade", "crowds"}
+        allowed = {"mileage", "elevation", "views", "proximity", "shade", "crowds", "difficulty"}
         w_out = {}
         for k, v in w.items():
             if k in allowed:
@@ -509,31 +512,26 @@ def _validate_and_clamp_prefs(p: Dict[str, Any]) -> Dict[str, Any]:
 # -----------------------------
 # Guardrails ("switches") applied AFTER LLM output
 # -----------------------------
-
 def _parse_minutes_from_query(query: str) -> Optional[float]:
     q = _norm_text(query)
-
     m1 = re.search(r"\b(\d+(?:\.\d+)?)\s*(min|mins|minute|minutes)\b", q)
     if m1:
         try:
             return float(m1.group(1))
         except Exception:
             return None
-
     m2 = re.search(r"\b(\d+(?:\.\d+)?)\s*(hr|hrs|hour|hours)\b", q)
     if m2:
         try:
             return float(m2.group(1)) * 60.0
         except Exception:
             return None
-
     m3 = re.search(r"\b(\d+(?:\.\d+)?)\s*-\s*minute\b", q)
     if m3:
         try:
             return float(m3.group(1))
         except Exception:
             return None
-
     return None
 
 
@@ -614,24 +612,11 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
     if cached:
         return cached
 
-    # ------------------------------------------------------------
-    # STRICT JSON SCHEMA FIXES (OpenAI Structured Outputs)
-    # - Every object MUST include `required` listing ALL property keys
-    # - Any nullable enums must use anyOf (string enum OR null)
-    # ------------------------------------------------------------
     prefs_required = [
-        "target_miles",
-        "min_mileage",
-        "max_mileage",
-        "target_elevation_gain",
-        "max_elevation",
-        "shade_preference",
-        "views_preference",
-        "crowds_preference",
-        "max_proximity",
-        "preferred_surface",
-        "location",
-        "weights",
+        "target_miles", "min_mileage", "max_mileage",
+        "target_elevation_gain", "max_elevation",
+        "shade_preference", "views_preference", "crowds_preference",
+        "max_proximity", "preferred_surface", "location", "weights",
     ]
     weights_required = ["mileage", "elevation", "views", "proximity", "shade", "crowds"]
 
@@ -646,20 +631,20 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
                     "type": "object",
                     "additionalProperties": False,
                     "properties": {
-                        "target_miles": {"type": ["number", "null"]},
-                        "min_mileage": {"type": ["number", "null"]},
-                        "max_mileage": {"type": ["number", "null"]},
+                        "target_miles":          {"type": ["number", "null"]},
+                        "min_mileage":           {"type": ["number", "null"]},
+                        "max_mileage":           {"type": ["number", "null"]},
                         "target_elevation_gain": {"type": ["number", "null"]},
-                        "max_elevation": {"type": ["number", "null"]},
-                        "shade_preference": {"type": ["number", "null"]},
-                        "views_preference": {"type": ["number", "null"]},
+                        "max_elevation":         {"type": ["number", "null"]},
+                        "shade_preference":      {"type": ["number", "null"]},
+                        "views_preference":      {"type": ["number", "null"]},
                         "crowds_preference": {
                             "anyOf": [
                                 {"type": "string", "enum": ["popular", "secluded", "balanced"]},
                                 {"type": "null"},
                             ]
                         },
-                        "max_proximity": {"type": ["number", "null"]},
+                        "max_proximity":    {"type": ["number", "null"]},
                         "preferred_surface": {
                             "anyOf": [
                                 {"type": "string", "enum": ["dirt", "paved", "mixed"]},
@@ -673,12 +658,12 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
                                     "type": "object",
                                     "additionalProperties": False,
                                     "properties": {
-                                        "mileage": {"type": ["number", "null"]},
+                                        "mileage":   {"type": ["number", "null"]},
                                         "elevation": {"type": ["number", "null"]},
-                                        "views": {"type": ["number", "null"]},
+                                        "views":     {"type": ["number", "null"]},
                                         "proximity": {"type": ["number", "null"]},
-                                        "shade": {"type": ["number", "null"]},
-                                        "crowds": {"type": ["number", "null"]},
+                                        "shade":     {"type": ["number", "null"]},
+                                        "crowds":    {"type": ["number", "null"]},
                                     },
                                     "required": weights_required,
                                 },
@@ -715,8 +700,8 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
             "miles_p25": MILES_P25,
             "miles_p75": MILES_P75,
             "miles_p90": MILES_P90,
-            "elev_p25": ELEV_P25,
-            "elev_p75": ELEV_P75,
+            "elev_p25":  ELEV_P25,
+            "elev_p75":  ELEV_P75,
         },
     }
 
@@ -726,7 +711,7 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
             model=OPENAI_MODEL,
             input=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
+                {"role": "user",   "content": json.dumps(user, ensure_ascii=False)},
             ],
             text={"format": {"type": "json_schema", "json_schema": schema}},
             timeout=OPENAI_TIMEOUT_SECONDS,
@@ -736,7 +721,7 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
             model=OPENAI_MODEL,
             input=[
                 {"role": "system", "content": system},
-                {"role": "user", "content": json.dumps(user, ensure_ascii=False)},
+                {"role": "user",   "content": json.dumps(user, ensure_ascii=False)},
             ],
             text={"format": {"type": "json_schema", "json_schema": schema}},
         )
@@ -754,7 +739,6 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
         conf = 0.0
 
     prefs = _validate_and_clamp_prefs(parsed.get("prefs", {}))
-
     payload = {"confidence": conf, "prefs": prefs}
     _cache_set(cache_key, payload)
     return payload
@@ -763,7 +747,6 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
 # -----------------------------
 # Score bands + batching logic
 # -----------------------------
-
 BAND_THRESHOLDS: List[float] = [85.0, 55.0, 40.0]
 MIN_RECOMMEND_SCORE = 40.0
 
@@ -807,11 +790,9 @@ def _next_batch_banded(
     start_threshold: float,
 ) -> Tuple[List[Dict[str, Any]], float, int]:
     thresholds = _bands_from_start_threshold(start_threshold)
-
     out: List[Dict[str, Any]] = []
     used_threshold = thresholds[0] if thresholds else MIN_RECOMMEND_SCORE
     relax_level = 0
-
     for i, thr in enumerate(thresholds):
         need = batch_size - len(out)
         if need <= 0:
@@ -821,7 +802,6 @@ def _next_batch_banded(
             out.extend(pulled)
             used_threshold = thr
             relax_level = i
-
     return out, used_threshold, relax_level
 
 
@@ -841,24 +821,19 @@ def _remaining_recommendable(ranked: List[Dict[str, Any]], shown: Set[str]) -> i
 # -----------------------------
 # Progressive Relaxation (soft constraints only)
 # -----------------------------
-
 def apply_progressive_relaxation(prefs: Dict[str, Any], relax_level: int) -> Dict[str, Any]:
     p = dict(prefs or {})
     rl = max(0, int(relax_level or 0))
-
     p["relax_level"] = rl
 
     min_m = float(p.get("min_mileage", 0.0) or 0.0)
     max_m = float(p.get("max_mileage", 100.0) or 100.0)
     if max_m < min_m:
         min_m, max_m = max_m, min_m
-
     mid = (min_m + max_m) / 2.0
     half = max(0.1, (max_m - min_m) / 2.0)
-
     widen = 1.0 + min(0.40, 0.10 * rl)
     new_half = half * widen
-
     p["min_mileage"] = max(0.0, mid - new_half)
     p["max_mileage"] = max(mid + new_half, p["min_mileage"] + 0.1)
 
@@ -882,7 +857,9 @@ def apply_progressive_relaxation(prefs: Dict[str, Any], relax_level: int) -> Dic
 
     return p
 
+
 MAKE_INGRESS_KEY = os.getenv("MAKE_INGRESS_KEY", "")
+
 
 def require_make_key(x_make_key: str | None) -> None:
     if not MAKE_INGRESS_KEY:
@@ -899,10 +876,10 @@ class MakeIngressBody(BaseModel):
     session_id: Optional[str] = None
     new_search: bool = False
 
+
 # -----------------------------
 # Routes
 # -----------------------------
-
 @app.get("/")
 def root():
     return {"status": "ok", "docs": "/docs"}
@@ -916,34 +893,25 @@ def health():
 # -----------------------------
 # Core search helper (shared by /start_search and Make ingress)
 # -----------------------------
-
 def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
-    # Keep compatibility with your existing pipeline:
-    # - weights are optional and still supported (for now)
-    # - preferences come in typed, then converted to dict for downstream functions
     prefs: Dict[str, Any] = body.preferences.model_dump(exclude_none=True) if body.preferences else {}
-
-    # Back-compat: allow Make/clients to optionally include "weights" inside preferences
     weights = prefs.pop("weights", None)
 
     query = (body.query or "").strip()
+
     if query:
-        # Existing rule-based translation
         prefs_rules = translate_query_rules(query, base_prefs=prefs)
         prefs = prefs_rules
 
-        # Existing LLM translation (your current infra) - keep it intact for now
         if LLM_TRANSLATION_ENABLED and not _prefs_have_enough_signal(prefs_rules):
             llm = translate_query_llm(query, base_prefs=prefs_rules)
             if float(llm.get("confidence", 0.0)) >= OPENAI_MIN_CONFIDENCE:
                 merged = merge_prefs(prefs_rules, llm.get("prefs", {}))
                 prefs = apply_llm_guardrails(query, merged)
 
-        # Final guardrails pass
         prefs = apply_llm_guardrails(query, prefs)
 
     start_new = bool(body.new_search) or not body.session_id
-
     if start_new:
         session_data = {
             "created_at": int(time.time()),
@@ -954,16 +922,15 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
         }
     else:
         session_data = read_session_token(body.session_id, max_age_seconds=3600)
-
         if prefs:
             session_data["prefs"] = prefs
             session_data["weights"] = weights
 
-        session_data.setdefault("created_at", int(time.time()))
-        session_data.setdefault("shown", [])
-        session_data.setdefault("prefs", {})
-        session_data.setdefault("weights", None)
-        session_data.setdefault("relax_level", 0)
+    session_data.setdefault("created_at", int(time.time()))
+    session_data.setdefault("shown", [])
+    session_data.setdefault("prefs", {})
+    session_data.setdefault("weights", None)
+    session_data.setdefault("relax_level", 0)
 
     shown_set: Set[str] = set(session_data.get("shown", []) or [])
 
@@ -991,8 +958,8 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
         shown_list = shown_list[:2000]
-
     session_data["shown"] = shown_list
+
     session_id_token = make_session_token(session_data)
 
     return {
@@ -1008,7 +975,6 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
 # -----------------------------
 # Normal app API (uses your existing API key auth)
 # -----------------------------
-
 @app.post("/start_search")
 def start_search(body: StartSearchBody, _: None = Depends(require_api_key)):
     return _start_search_core(body)
@@ -1021,11 +987,9 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
     session_data.setdefault("prefs", {})
     session_data.setdefault("weights", None)
     session_data.setdefault("relax_level", 0)
-
     session_data["relax_level"] = min(int(session_data.get("relax_level", 0) or 0) + 1, 8)
 
     shown_set: Set[str] = set(session_data.get("shown", []) or [])
-
     relaxed_prefs = apply_progressive_relaxation(session_data["prefs"], int(session_data["relax_level"]))
 
     ranked = select_routes(
@@ -1047,7 +1011,6 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
         shown_list = shown_list[:2000]
-
     session_data["shown"] = shown_list
     session_data["created_at"] = int(time.time())
 
@@ -1066,8 +1029,8 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
 # -----------------------------
 # Make ingress (Option B: simple separate key)
 # -----------------------------
-
 MAKE_INGRESS_KEY = os.getenv("MAKE_INGRESS_KEY", "")
+
 
 def require_make_key(x_make_key: str | None) -> None:
     if not MAKE_INGRESS_KEY:
@@ -1080,7 +1043,6 @@ class MakeIngressBody(BaseModel):
     # What Make sends AFTER it has translated NL -> typed Preferences
     query: str
     preferences: Preferences = Field(default_factory=Preferences)
-
     batch_size: int = 3
     min_conformity: int = 85
     session_id: Optional[str] = None
@@ -1093,7 +1055,6 @@ def make_translate_and_search(
     x_make_key: str | None = Header(default=None, alias="X-Make-Key"),
 ):
     require_make_key(x_make_key)
-
     body = StartSearchBody(
         query=payload.query,
         preferences=payload.preferences,
@@ -1102,14 +1063,12 @@ def make_translate_and_search(
         session_id=payload.session_id,
         new_search=payload.new_search,
     )
-
     return _start_search_core(body)
 
 
 # -----------------------------
 # Errors
 # -----------------------------
-
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if DEV_MODE:
@@ -1121,3 +1080,4 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"status": "error", "message": "Internal server error"},
     )
+
