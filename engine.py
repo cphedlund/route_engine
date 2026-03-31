@@ -14,11 +14,11 @@ class Route:
     distance_miles: float
     elevation_gain: float
     surface_type: str
-    shade_pct: float               # 0-100
-    scenic_likelihood: float       # 0-1
+    shade_pct: float          # 0-100
+    scenic_likelihood: float  # 0-1
     proximity_miles: float
     route_type: str
-    popularity: float              # 0-100 (optional signal)
+    popularity: float         # 0-100 (optional signal)
     difficulty: str
     technicality: str
     # Computed at load time from GPX data (optional — default for legacy data)
@@ -30,17 +30,18 @@ class Route:
 # Band thresholds (your spec)
 BAND_1_MIN = 85.00
 BAND_2_MIN = 55.00
-BAND_3_MIN = 40.00  # below this is not recommended
+BAND_3_MIN = 40.00   # below this is not recommended
 
 
-# Weights sum to 1.00
+# Weights sum to 1.00 — redistributed to include difficulty
 DEFAULT_WEIGHTS = {
-    "mileage": 0.32,
-    "elevation": 0.20,
-    "views": 0.16,
-    "proximity": 0.10,
-    "shade": 0.10,
-    "crowds": 0.12,
+    "mileage":    0.30,
+    "elevation":  0.18,
+    "views":      0.14,
+    "proximity":  0.10,
+    "shade":      0.08,
+    "crowds":     0.10,
+    "difficulty":  0.10,
 }
 
 
@@ -67,59 +68,42 @@ def _location_match(route_loc: str, user_loc: str) -> bool:
 
 
 # ------------------------------------------------------------
-# Scenic likelihood inference (NEW)
+# Scenic likelihood inference
 # ------------------------------------------------------------
-
 _SCENIC_KEYWORDS = [
-    "peak", "summit", "ridge", "ridgeline", "lookout", "vista", "overlook", "panorama",
-    "view", "views", "scenic",
-    "canyon", "falls", "waterfall", "creek", "lake", "reservoir",
-    "meadow", "bluff", "point",
+    "peak", "summit", "ridge", "ridgeline", "lookout", "vista", "overlook",
+    "panorama", "view", "views", "scenic", "canyon", "falls", "waterfall",
+    "creek", "lake", "reservoir", "meadow", "bluff", "point",
 ]
+
 
 def _infer_scenic_likelihood(route: Route) -> float:
     """
     Derive a scenic likelihood estimate from existing route attributes.
     Returns 0..1.
-
-    Signals:
-      - elevation gain per mile (proxy for getting high / viewpoints)
-      - popularity (proxy for "people go here for a reason")
-      - name keywords ("peak", "ridge", "vista", etc.)
-      - route_type (loops slightly favored)
     """
-    # --- Gain per mile: normalize into 0..1
     miles = max(0.1, float(route.distance_miles))
     elev = max(0.0, float(route.elevation_gain))
-    gpm = elev / miles  # ft per mile
+    gpm = elev / miles
 
-    # Typical ranges: ~0–900+ ft/mi depending on region/routes
-    # Below ~100 ft/mi is usually not "view-driven". Above ~700 ft/mi tends to imply climbs/ridges.
     gpm_norm = _clamp((gpm - 100.0) / 600.0, 0.0, 1.0)
-
-    # --- Popularity: 0..1
     pop_norm = _clamp(float(route.popularity) / 100.0, 0.0, 1.0)
 
-    # --- Name keyword bonus
     name = _norm_text(route.name)
     kw_hits = 0
     for kw in _SCENIC_KEYWORDS:
         if kw in name:
             kw_hits += 1
-    # Cap keyword influence (avoid "Vista Vista Vista" dominating)
     kw_bonus = _clamp(0.10 * kw_hits, 0.0, 0.35)
 
-    # --- Route type mild bonus
     rt = _norm_text(route.route_type)
     loop_bonus = 0.05 if ("loop" in rt) else 0.0
 
-    # --- Difficulty/technicality mild scenic correlation (optional but safe)
     diff = _norm_text(route.difficulty)
     tech = _norm_text(route.technicality)
     hard_bonus = 0.03 if any(x in diff for x in ["hard", "difficult"]) else 0.0
     tech_bonus = 0.03 if any(x in tech for x in ["technical", "rocky"]) else 0.0
 
-    # Weighted blend (tuned to be conservative)
     inferred = (
         0.15
         + 0.50 * gpm_norm
@@ -129,15 +113,14 @@ def _infer_scenic_likelihood(route: Route) -> float:
         + hard_bonus
         + tech_bonus
     )
-
     return _clamp(inferred, 0.0, 1.0)
 
 
 def _effective_scenic(route: Route) -> float:
     """
     Use the best available scenic value:
-      - keep dataset value if it's good
-      - otherwise "rescue" using inference
+    - keep dataset value if it's good
+    - otherwise "rescue" using inference
     We never reduce scenic likelihood.
     """
     try:
@@ -148,14 +131,75 @@ def _effective_scenic(route: Route) -> float:
     return max(base, inferred)
 
 
+# ------------------------------------------------------------
+# Difficulty scoring (NEW — 1b)
+# ------------------------------------------------------------
+
+# Ordered levels for distance-based scoring
+_DIFFICULTY_LEVELS = ["easy", "moderate", "hard", "very hard"]
+
+
+def _difficulty_index(level: str) -> int:
+    """Map difficulty string to numeric index. Returns -1 if unknown."""
+    normalized = _norm_text(level)
+    for i, lvl in enumerate(_DIFFICULTY_LEVELS):
+        if lvl in normalized or normalized in lvl:
+            return i
+    # Common synonyms
+    if any(w in normalized for w in ["beginner", "simple", "flat", "gentle"]):
+        return 0
+    if any(w in normalized for w in ["intermediate", "medium"]):
+        return 1
+    if any(w in normalized for w in ["challenging", "strenuous", "difficult"]):
+        return 2
+    if any(w in normalized for w in ["extreme", "expert"]):
+        return 3
+    return -1
+
+
+def _difficulty_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Score how well the route difficulty matches the user's requested difficulty.
+
+    Scoring:
+      - Exact match: 1.0
+      - 1 level away: 0.55
+      - 2 levels away: 0.20
+      - 3 levels away: -0.10 (actively penalizes)
+      - No preference stated: 0.6 (neutral)
+      - Unknown route difficulty: 0.5 (slight penalty vs known matches)
+    """
+    user_diff_pref = prefs.get("difficulty_preference", None)
+    if user_diff_pref is None:
+        return 0.6  # neutral — no preference expressed
+
+    user_idx = _difficulty_index(str(user_diff_pref))
+    route_idx = _difficulty_index(str(route.difficulty))
+
+    if user_idx < 0 or route_idx < 0:
+        return 0.5  # can't compare — slightly below neutral
+
+    distance = abs(user_idx - route_idx)
+
+    if distance == 0:
+        return 1.0
+    elif distance == 1:
+        return 0.55
+    elif distance == 2:
+        return 0.20
+    else:
+        return -0.10
+
+
+# ------------------------------------------------------------
+# Mileage scoring
+# ------------------------------------------------------------
+
 def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: int = 0) -> float:
     """
     Two-zone mileage scoring.
-    Zone 1 (within tol): score 1.0 → 0.60  (never penalizes, just rewards closeness)
-    Zone 2 (outside tol): score 0.60 → negative  (actively pulls conformity down)
-    Negative scores are intentional — they propagate into the weighted sum so that
-    other dimensions cannot freely compensate for a bad distance match.
-    The final conformity display value is still clamped to 0 externally.
+    Zone 1 (within tol): score 1.0 → 0.60
+    Zone 2 (outside tol): score 0.60 → negative
     """
     m = float(distance_miles)
     relax_factor = 1.0 + min(0.50, 0.10 * max(0, relax_level))
@@ -188,6 +232,10 @@ def _mileage_score(distance_miles: float, prefs: Dict[str, Any], relax_level: in
     return _clamp(score, -0.40, 0.60)
 
 
+# ------------------------------------------------------------
+# Elevation scoring
+# ------------------------------------------------------------
+
 def _elevation_score(
     distance_miles: float,
     elevation_gain: float,
@@ -196,21 +244,16 @@ def _elevation_score(
 ) -> Tuple[float, float, float]:
     """
     Elevation: "no surprises"
-      - total gain alignment
-      - steepness proxy using ft-per-mile to avoid surprise steep routes
-
     Returns: (elevation_score, elev_gain_score, steepness_score)
     """
     e = float(elevation_gain)
     m = max(0.1, float(distance_miles))
     gain_per_mile = e / m
-
     relax_factor = 1.0 + min(0.75, 0.15 * max(0, relax_level))
 
     max_elev = prefs.get("max_elevation", None)
     target_elev = prefs.get("target_elevation_gain", None)
 
-    # Total gain score
     if target_elev is not None:
         t = float(target_elev)
         tol = max(150.0, 0.25 * max(t, 1.0)) * relax_factor
@@ -230,16 +273,15 @@ def _elevation_score(
         elev_gain_score = 0.6
         expected_gain = None
 
-    # Steepness score (ft/mi proxy)
     if expected_gain is not None:
         if prefs.get("target_miles") is not None:
             expected_miles = max(1.0, float(prefs["target_miles"]))
         else:
             expected_miles = max(
                 1.0,
-                (float(prefs.get("min_mileage", 0.0)) + float(prefs.get("max_mileage", 100.0))) / 2.0,
+                (float(prefs.get("min_mileage", 0.0))
+                 + float(prefs.get("max_mileage", 100.0))) / 2.0,
             )
-
         max_ft_per_mile = max(50.0, float(expected_gain) / expected_miles)
         steep_overshoot = max(0.0, gain_per_mile - max_ft_per_mile)
         steep_tol = max(100.0, 0.35 * max_ft_per_mile) * relax_factor
@@ -266,7 +308,6 @@ def _shade_score(shade_pct: float, prefs: Dict[str, Any]) -> float:
 def _crowds_score(popularity_0_100: float, prefs: Dict[str, Any]) -> float:
     p = _clamp(float(popularity_0_100) / 100.0, 0.0, 1.0)
     mode = str(prefs.get("crowds_preference", "balanced") or "balanced").strip().lower()
-
     if mode == "popular":
         return p
     if mode == "secluded":
@@ -294,7 +335,7 @@ def _gradient_score(route: Route, prefs: Dict[str, Any]) -> float:
     """Score steepness using real per-segment grade data from GPX."""
     max_gain_m = prefs.get("max_gain_m", None)
     if max_gain_m is None:
-        return 0.6  # neutral when no preference
+        return 0.6
 
     target_miles = prefs.get("target_miles", None)
     if target_miles and float(target_miles) > 0:
@@ -302,11 +343,16 @@ def _gradient_score(route: Route, prefs: Dict[str, Any]) -> float:
         expected_max_grade = (expected_ft_per_mile / 5280.0) * 100.0
     else:
         gain_m = float(max_gain_m)
-        if gain_m <= 50:    expected_max_grade = 1.0
-        elif gain_m <= 150: expected_max_grade = 3.0
-        elif gain_m <= 300: expected_max_grade = 5.0
-        elif gain_m <= 500: expected_max_grade = 8.0
-        else:               expected_max_grade = 12.0
+        if gain_m <= 50:
+            expected_max_grade = 1.0
+        elif gain_m <= 150:
+            expected_max_grade = 3.0
+        elif gain_m <= 300:
+            expected_max_grade = 5.0
+        elif gain_m <= 500:
+            expected_max_grade = 8.0
+        else:
+            expected_max_grade = 12.0
 
     max_grade = float(route.max_grade_pct or 0.0)
     avg_grade = float(route.avg_grade_pct or 0.0)
@@ -348,18 +394,14 @@ def select_routes(
 
     user_location = prefs.get("location")
     max_prox = float(prefs.get("max_proximity", 20.0))
-
     allowed_surfaces = prefs.get("allowed_surface_types")
     preferred_surface = prefs.get("preferred_surface")
-
     relax_level = int(prefs.get("relax_level", 0) or 0)
 
-    # User coordinates for live haversine proximity
     user_lat = prefs.get("lat", None)
     user_lng = prefs.get("lng", None)
     has_user_location = (user_lat is not None and user_lng is not None)
 
-    # --- Progressive relaxation: allow a SMALL overflow beyond max_prox after a few "more"
     prox_overflow = 0.0
     if relax_level >= 2:
         prox_overflow = min(10.0, 2.0 * relax_level)
@@ -401,7 +443,6 @@ def select_routes(
             intent_filtered = [r for r in candidates if r.route_type == intent_lower]
             if intent_filtered:
                 candidates = intent_filtered
-            # else: fail-safe — keep full candidate set
 
     # Hard distance pre-filter — tiered window based on target distance
     target_miles_val = prefs.get("target_miles", None)
@@ -420,9 +461,8 @@ def select_routes(
         filtered = [r for r in candidates if lower_bound <= r.distance_miles <= upper_bound]
         if filtered:
             candidates = filtered
-        # else: fail-safe — filter would eliminate all candidates, keep full set
 
-    # ── Bounding-box geographic filter ──────────────────────────────
+    # Bounding-box geographic filter
     bbox_min_lat = prefs.get("bbox_min_lat")
     bbox_min_lng = prefs.get("bbox_min_lng")
     bbox_max_lat = prefs.get("bbox_max_lat")
@@ -433,15 +473,13 @@ def select_routes(
         bbox_min_lng = float(bbox_min_lng)
         bbox_max_lat = float(bbox_max_lat)
         bbox_max_lng = float(bbox_max_lng)
-        # Routes without _start_point are kept (can't filter them)
         bbox_filtered = [
             r for r in candidates
             if r._start_point is None or (
-                bbox_min_lat <= r._start_point[0] <= bbox_max_lat and
-                bbox_min_lng <= r._start_point[1] <= bbox_max_lng
+                bbox_min_lat <= r._start_point[0] <= bbox_max_lat
+                and bbox_min_lng <= r._start_point[1] <= bbox_max_lng
             )
         ]
-        # Fail-safe: if filter wipes everything, keep original candidates
         if bbox_filtered:
             candidates = bbox_filtered
 
@@ -450,16 +488,15 @@ def select_routes(
     scenic_bonus_factor = 0.25
 
     results: List[Dict[str, Any]] = []
+
     for r in candidates:
         sub: Dict[str, float] = {}
 
-        # Live proximity for this route
         if has_user_location and r._start_point is not None:
             live_prox = haversine_miles((user_lat, user_lng), r._start_point)
         else:
             live_prox = r.proximity_miles
 
-        # Compute inferred/augmented scenic value once per route
         scenic_eff = _effective_scenic(r)
 
         sub["mileage"] = _mileage_score(r.distance_miles, prefs, relax_level=relax_level)
@@ -467,41 +504,39 @@ def select_routes(
         elev_score, elev_gain_score, steep_score = _elevation_score(
             r.distance_miles, r.elevation_gain, prefs, relax_level=relax_level
         )
-
         gradient = _gradient_score(r, prefs)
         new_elev_score = _clamp(0.65 * elev_gain_score + 0.35 * gradient, 0.0, 1.0)
         if scenic_offsets_elev:
             new_elev_score = _clamp(
                 new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
-                0.0,
-                1.0,
+                0.0, 1.0,
             )
 
         sub["elevation"] = new_elev_score
         sub["elev_gain"] = _clamp(elev_gain_score, 0.0, 1.0)
         sub["steepness"] = gradient
-
         sub["views"] = _views_score(scenic_eff, prefs)
         sub["shade"] = _shade_score(r.shade_pct, prefs)
         sub["proximity"] = _proximity_soft_score(live_prox, max_prox)
         sub["crowds"] = _crowds_score(r.popularity, prefs)
+        sub["difficulty"] = _difficulty_score(r, prefs)
 
         score_0_1 = 0.0
-        score_0_1 += w.get("mileage", 0.0) * sub["mileage"]
-        score_0_1 += w.get("elevation", 0.0) * sub["elevation"]
-        score_0_1 += w.get("views", 0.0) * sub["views"]
-        score_0_1 += w.get("shade", 0.0) * sub["shade"]
-        score_0_1 += w.get("proximity", 0.0) * sub["proximity"]
-        score_0_1 += w.get("crowds", 0.0) * sub["crowds"]
+        score_0_1 += w.get("mileage", 0.0)    * sub["mileage"]
+        score_0_1 += w.get("elevation", 0.0)   * sub["elevation"]
+        score_0_1 += w.get("views", 0.0)       * sub["views"]
+        score_0_1 += w.get("shade", 0.0)       * sub["shade"]
+        score_0_1 += w.get("proximity", 0.0)   * sub["proximity"]
+        score_0_1 += w.get("crowds", 0.0)      * sub["crowds"]
+        score_0_1 += w.get("difficulty", 0.0)   * sub["difficulty"]
 
         conformity = round(_clamp(score_0_1, 0.0, 1.0) * 100.0, 2)
-
         band = _score_band(conformity)
         if band is None:
             continue
 
         # ============================================================
-        # Explanation bits (2–3 max) — aligned to UI language
+        # Explanation bits (2–3 max)
         # ============================================================
         explain: List[str] = []
 
@@ -525,7 +560,13 @@ def select_routes(
                 if sub["elev_gain"] < 0.55 or sub["steepness"] < 0.55:
                     explain.append("a bit more climb" if relax_level >= 2 else "more climb")
 
-        # Views + shade language (use scenic_eff)
+        # Difficulty explanation
+        if sub["difficulty"] >= 0.90:
+            explain.append(f"{r.difficulty} trail")
+        elif sub["difficulty"] <= 0.25:
+            user_diff = prefs.get("difficulty_preference", "")
+            explain.append(f"harder than {user_diff}" if user_diff else "harder trail")
+
         if views_pref >= 0.7 and _clamp(scenic_eff, 0.0, 1.0) >= 0.7:
             explain.append("big views")
 
@@ -548,14 +589,14 @@ def select_routes(
                 break
 
         results.append({
-            "route_id": r.route_id,
-            "name": r.name,
-            "route_type": r.route_type,
-            "max_grade_pct": r.max_grade_pct,
-            "avg_grade_pct": r.avg_grade_pct,
+            "route_id":        r.route_id,
+            "name":            r.name,
+            "route_type":      r.route_type,
+            "max_grade_pct":   r.max_grade_pct,
+            "avg_grade_pct":   r.avg_grade_pct,
             "conformity_score": conformity,
-            "score_band": band,
-            "sub_scores": sub,
+            "score_band":      band,
+            "sub_scores":      sub,
             "explanation_bits": explain_unique,
         })
 
