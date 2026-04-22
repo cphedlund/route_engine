@@ -711,6 +711,8 @@ def select_routes(
         sub["views"] = _views_score(scenic_eff, prefs)
         # Use OSM shade if available, fall back to legacy heuristic shade_pct
         effective_shade = r.osm_shade_pct if r.osm_shade_pct > 0 else r.shade_pct
+        if r.name == "Summit Rock Climb":
+            print(f"[DEBUG SHADE] {r.name}: osm_shade_pct={r.osm_shade_pct}, legacy={r.shade_pct}, effective={effective_shade}", flush=True)
         sub["shade"] = _shade_score(effective_shade, prefs)
         sub["proximity"] = _proximity_soft_score(live_prox, max_prox)
         sub["crowds"] = _crowds_score(r.popularity, prefs)
