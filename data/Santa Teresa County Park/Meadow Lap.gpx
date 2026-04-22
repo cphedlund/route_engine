@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Meadow Lap</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3468359889869351684"/>
+ </metadata>
+ <trk>
+  <name>Meadow Lap</name>
+  <link href="https://www.strava.com/routes/3468359889869351684"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.21226" lon="-121.79">
+    <ele>171.35</ele>
+   </trkpt>
+   <trkpt lat="37.21195" lon="-121.79001000000001">
+    <ele>172.09</ele>
+   </trkpt>
+   <trkpt lat="37.21213" lon="-121.78914">
+    <ele>173.35</ele>
+   </trkpt>
+   <trkpt lat="37.21215" lon="-121.78896">
+    <ele>173.84000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.21224" lon="-121.78843">
+    <ele>175.61</ele>
+   </trkpt>
+   <trkpt lat="37.212320000000005" lon="-121.78809000000001">
+    <ele>178.36</ele>
+   </trkpt>
+   <trkpt lat="37.21235" lon="-121.78784000000002">
+    <ele>179.6</ele>
+   </trkpt>
+   <trkpt lat="37.21222" lon="-121.78741000000001">
+    <ele>185.08</ele>
+   </trkpt>
+   <trkpt lat="37.21228" lon="-121.78670000000001">
+    <ele>185.12</ele>
+   </trkpt>
+   <trkpt lat="37.21228" lon="-121.78672000000002">
+    <ele>185.21</ele>
+   </trkpt>
+   <trkpt lat="37.212300000000006" lon="-121.7865">
+    <ele>184.52</ele>
+   </trkpt>
+   <trkpt lat="37.212390000000006" lon="-121.7861">
+    <ele>184.22000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.21244" lon="-121.78598000000001">
+    <ele>183.9</ele>
+   </trkpt>
+   <trkpt lat="37.212740000000004" lon="-121.78574">
+    <ele>183.2</ele>
+   </trkpt>
+   <trkpt lat="37.21284" lon="-121.78561">
+    <ele>183.33</ele>
+   </trkpt>
+   <trkpt lat="37.21322" lon="-121.78538">
+    <ele>182.86</ele>
+   </trkpt>
+   <trkpt lat="37.21341" lon="-121.78534">
+    <ele>181.6</ele>
+   </trkpt>
+   <trkpt lat="37.21359" lon="-121.78533000000002">
+    <ele>180.17000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.213750000000005" lon="-121.78534">
+    <ele>179.64000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.2139" lon="-121.78538">
+    <ele>179.02</ele>
+   </trkpt>
+   <trkpt lat="37.21396" lon="-121.78534">
+    <ele>178.70000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.21403" lon="-121.78540000000001">
+    <ele>178.84000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.2139" lon="-121.78552">
+    <ele>179.38</ele>
+   </trkpt>
+   <trkpt lat="37.213840000000005" lon="-121.78565">
+    <ele>179.74</ele>
+   </trkpt>
+   <trkpt lat="37.213950000000004" lon="-121.7857">
+    <ele>179.83</ele>
+   </trkpt>
+   <trkpt lat="37.214220000000005" lon="-121.78596">
+    <ele>180.37</ele>
+   </trkpt>
+   <trkpt lat="37.214290000000005" lon="-121.78609000000002">
+    <ele>180.93</ele>
+   </trkpt>
+   <trkpt lat="37.21434" lon="-121.78620000000001">
+    <ele>180.93</ele>
+   </trkpt>
+   <trkpt lat="37.21435" lon="-121.78628">
+    <ele>181.31000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.21434" lon="-121.78655">
+    <ele>181.64000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.214240000000004" lon="-121.78704">
+    <ele>181.8</ele>
+   </trkpt>
+   <trkpt lat="37.21419" lon="-121.78744">
+    <ele>181.64000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.214240000000004" lon="-121.78771">
+    <ele>181.84</ele>
+   </trkpt>
+   <trkpt lat="37.214490000000005" lon="-121.78851000000002">
+    <ele>183.41000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.21455" lon="-121.78885000000001">
+    <ele>183.74</ele>
+   </trkpt>
+   <trkpt lat="37.214470000000006" lon="-121.78896">
+    <ele>183.26</ele>
+   </trkpt>
+   <trkpt lat="37.214420000000004" lon="-121.78905">
+    <ele>181.95000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.21443" lon="-121.78914">
+    <ele>181.95000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.21428" lon="-121.78917000000001">
+    <ele>180.13</ele>
+   </trkpt>
+   <trkpt lat="37.214290000000005" lon="-121.78949000000001">
+    <ele>179.20000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.214330000000004" lon="-121.78981000000002">
+    <ele>178.99</ele>
+   </trkpt>
+   <trkpt lat="37.214650000000006" lon="-121.79043000000001">
+    <ele>179.51</ele>
+   </trkpt>
+   <trkpt lat="37.21448" lon="-121.79047000000001">
+    <ele>177.83</ele>
+   </trkpt>
+   <trkpt lat="37.214470000000006" lon="-121.79047000000001">
+    <ele>177.78000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.21417" lon="-121.79049">
+    <ele>175.47</ele>
+   </trkpt>
+   <trkpt lat="37.21405" lon="-121.79048000000002">
+    <ele>173.89000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.213820000000005" lon="-121.79039000000002">
+    <ele>173.33</ele>
+   </trkpt>
+   <trkpt lat="37.21358" lon="-121.7904">
+    <ele>172.22</ele>
+   </trkpt>
+   <trkpt lat="37.21314" lon="-121.79028000000001">
+    <ele>171.20000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.212900000000005" lon="-121.79022">
+    <ele>170.83</ele>
+   </trkpt>
+   <trkpt lat="37.212500000000006" lon="-121.79004">
+    <ele>170.74</ele>
+   </trkpt>
+   <trkpt lat="37.21226" lon="-121.79">
+    <ele>171.35</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

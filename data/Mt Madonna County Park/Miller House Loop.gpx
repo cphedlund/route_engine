@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Miller House Loop</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3461483790212152768"/>
+ </metadata>
+ <trk>
+  <name>Miller House Loop</name>
+  <link href="https://www.strava.com/routes/3461483790212152768"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.01191" lon="-121.70499000000001">
+    <ele>576.85</ele>
+   </trkpt>
+   <trkpt lat="37.01198" lon="-121.7048">
+    <ele>577.3100000000001</ele>
+   </trkpt>
+   <trkpt lat="37.012240000000006" lon="-121.70426">
+    <ele>578.33</ele>
+   </trkpt>
+   <trkpt lat="37.01245" lon="-121.70394">
+    <ele>577.65</ele>
+   </trkpt>
+   <trkpt lat="37.012840000000004" lon="-121.70371000000002">
+    <ele>575.83</ele>
+   </trkpt>
+   <trkpt lat="37.01278000000001" lon="-121.70331000000002">
+    <ele>574.52</ele>
+   </trkpt>
+   <trkpt lat="37.012570000000004" lon="-121.70313000000002">
+    <ele>571.34</ele>
+   </trkpt>
+   <trkpt lat="37.012280000000004" lon="-121.70292">
+    <ele>567.19</ele>
+   </trkpt>
+   <trkpt lat="37.01207" lon="-121.70315000000001">
+    <ele>567.33</ele>
+   </trkpt>
+   <trkpt lat="37.012010000000004" lon="-121.70337">
+    <ele>568.0</ele>
+   </trkpt>
+   <trkpt lat="37.012010000000004" lon="-121.70338000000001">
+    <ele>568.03</ele>
+   </trkpt>
+   <trkpt lat="37.01196" lon="-121.70359">
+    <ele>569.25</ele>
+   </trkpt>
+   <trkpt lat="37.01184000000001" lon="-121.7039">
+    <ele>570.09</ele>
+   </trkpt>
+   <trkpt lat="37.011660000000006" lon="-121.70417">
+    <ele>572.3600000000001</ele>
+   </trkpt>
+   <trkpt lat="37.01162" lon="-121.70453">
+    <ele>573.4</ele>
+   </trkpt>
+   <trkpt lat="37.011630000000004" lon="-121.70488000000002">
+    <ele>574.6</ele>
+   </trkpt>
+   <trkpt lat="37.01164" lon="-121.70521000000001">
+    <ele>573.46</ele>
+   </trkpt>
+   <trkpt lat="37.01184000000001" lon="-121.70544000000001">
+    <ele>573.61</ele>
+   </trkpt>
+   <trkpt lat="37.01185" lon="-121.70524">
+    <ele>575.1200000000001</ele>
+   </trkpt>
+   <trkpt lat="37.01185" lon="-121.70525">
+    <ele>575.0200000000001</ele>
+   </trkpt>
+   <trkpt lat="37.01191" lon="-121.70499000000001">
+    <ele>576.85</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

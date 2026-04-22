@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Oak Meadow Park Loop</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3472736233803592130"/>
+ </metadata>
+ <trk>
+  <name>Oak Meadow Park Loop</name>
+  <link href="https://www.strava.com/routes/3472736233803592130"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.23548" lon="-121.97414">
+    <ele>96.25</ele>
+   </trkpt>
+   <trkpt lat="37.235690000000005" lon="-121.97418">
+    <ele>96.51</ele>
+   </trkpt>
+   <trkpt lat="37.23626" lon="-121.97433000000001">
+    <ele>95.58000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23662" lon="-121.97432">
+    <ele>95.5</ele>
+   </trkpt>
+   <trkpt lat="37.236610000000006" lon="-121.97467">
+    <ele>95.82000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23662" lon="-121.97504">
+    <ele>96.60000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23666" lon="-121.97534000000002">
+    <ele>97.42</ele>
+   </trkpt>
+   <trkpt lat="37.236630000000005" lon="-121.97548">
+    <ele>97.76</ele>
+   </trkpt>
+   <trkpt lat="37.236630000000005" lon="-121.97549000000001">
+    <ele>97.78</ele>
+   </trkpt>
+   <trkpt lat="37.23659" lon="-121.97561">
+    <ele>98.0</ele>
+   </trkpt>
+   <trkpt lat="37.23653" lon="-121.97567000000001">
+    <ele>98.11</ele>
+   </trkpt>
+   <trkpt lat="37.23644" lon="-121.97574000000002">
+    <ele>97.92</ele>
+   </trkpt>
+   <trkpt lat="37.23635" lon="-121.97575">
+    <ele>97.87</ele>
+   </trkpt>
+   <trkpt lat="37.23612" lon="-121.9757">
+    <ele>98.06</ele>
+   </trkpt>
+   <trkpt lat="37.23593" lon="-121.97564000000001">
+    <ele>98.07000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.235730000000004" lon="-121.97560000000001">
+    <ele>97.83000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23566" lon="-121.97558000000001">
+    <ele>97.83000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23546" lon="-121.97548">
+    <ele>97.69000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.235380000000006" lon="-121.97532000000001">
+    <ele>97.64</ele>
+   </trkpt>
+   <trkpt lat="37.23534" lon="-121.97513000000001">
+    <ele>97.32000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.235330000000005" lon="-121.97508">
+    <ele>97.33000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23534" lon="-121.97477">
+    <ele>96.76</ele>
+   </trkpt>
+   <trkpt lat="37.235440000000004" lon="-121.97427">
+    <ele>96.36</ele>
+   </trkpt>
+   <trkpt lat="37.23548" lon="-121.97414">
+    <ele>96.25</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

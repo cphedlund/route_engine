@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Uvas Creek Trail</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3472743547632504800"/>
+ </metadata>
+ <trk>
+  <name>Uvas Creek Trail</name>
+  <link href="https://www.strava.com/routes/3472743547632504800"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.084300000000006" lon="-121.79374000000001">
+    <ele>345.30000000000007</ele>
+   </trkpt>
+   <trkpt lat="37.08428" lon="-121.79384">
+    <ele>346.74000000000007</ele>
+   </trkpt>
+   <trkpt lat="37.084300000000006" lon="-121.79444000000001">
+    <ele>349.63000000000005</ele>
+   </trkpt>
+   <trkpt lat="37.08428" lon="-121.79465">
+    <ele>349.89000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.08402" lon="-121.79519">
+    <ele>348.34000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.084010000000006" lon="-121.79529000000001">
+    <ele>348.48</ele>
+   </trkpt>
+   <trkpt lat="37.084070000000004" lon="-121.79537">
+    <ele>348.48</ele>
+   </trkpt>
+   <trkpt lat="37.084140000000005" lon="-121.79537">
+    <ele>347.94</ele>
+   </trkpt>
+   <trkpt lat="37.08467" lon="-121.79500000000002">
+    <ele>347.11</ele>
+   </trkpt>
+   <trkpt lat="37.08482" lon="-121.79484000000001">
+    <ele>346.0</ele>
+   </trkpt>
+   <trkpt lat="37.084900000000005" lon="-121.79478">
+    <ele>344.53</ele>
+   </trkpt>
+   <trkpt lat="37.085100000000004" lon="-121.79448000000001">
+    <ele>342.81</ele>
+   </trkpt>
+   <trkpt lat="37.08527" lon="-121.79412">
+    <ele>339.6</ele>
+   </trkpt>
+   <trkpt lat="37.08538" lon="-121.79402">
+    <ele>339.03000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.085480000000004" lon="-121.79402">
+    <ele>338.55</ele>
+   </trkpt>
+   <trkpt lat="37.08559" lon="-121.79406000000002">
+    <ele>338.0</ele>
+   </trkpt>
+   <trkpt lat="37.08572" lon="-121.79429">
+    <ele>337.8</ele>
+   </trkpt>
+   <trkpt lat="37.0859" lon="-121.79489000000001">
+    <ele>338.5</ele>
+   </trkpt>
+   <trkpt lat="37.085930000000005" lon="-121.79506">
+    <ele>338.44</ele>
+   </trkpt>
+   <trkpt lat="37.08615" lon="-121.79514">
+    <ele>335.31000000000006</ele>
+   </trkpt>
+   <trkpt lat="37.08621" lon="-121.79518000000002">
+    <ele>333.66</ele>
+   </trkpt>
+   <trkpt lat="37.08625" lon="-121.79523">
+    <ele>332.61</ele>
+   </trkpt>
+   <trkpt lat="37.08628" lon="-121.79564">
+    <ele>323.32000000000005</ele>
+   </trkpt>
+   <trkpt lat="37.08632" lon="-121.79577">
+    <ele>322.33</ele>
+   </trkpt>
+   <trkpt lat="37.086470000000006" lon="-121.79596000000001">
+    <ele>317.21000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.086600000000004" lon="-121.7964">
+    <ele>310.97</ele>
+   </trkpt>
+   <trkpt lat="37.08664" lon="-121.79644">
+    <ele>308.98</ele>
+   </trkpt>
+   <trkpt lat="37.08666" lon="-121.7964">
+    <ele>308.98</ele>
+   </trkpt>
+   <trkpt lat="37.08666" lon="-121.79629000000001">
+    <ele>307.4</ele>
+   </trkpt>
+   <trkpt lat="37.08666" lon="-121.79630000000002">
+    <ele>307.28</ele>
+   </trkpt>
+   <trkpt lat="37.0867" lon="-121.79572">
+    <ele>304.47</ele>
+   </trkpt>
+   <trkpt lat="37.086650000000006" lon="-121.79519">
+    <ele>303.78000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.086330000000004" lon="-121.79429">
+    <ele>303.57</ele>
+   </trkpt>
+   <trkpt lat="37.086110000000005" lon="-121.79385">
+    <ele>304.95</ele>
+   </trkpt>
+   <trkpt lat="37.08601" lon="-121.7934">
+    <ele>303.62</ele>
+   </trkpt>
+   <trkpt lat="37.08587" lon="-121.79301000000001">
+    <ele>301.66</ele>
+   </trkpt>
+   <trkpt lat="37.085800000000006" lon="-121.79274000000001">
+    <ele>300.59000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.085730000000005" lon="-121.79257000000001">
+    <ele>300.24</ele>
+   </trkpt>
+   <trkpt lat="37.08567" lon="-121.7925">
+    <ele>303.05</ele>
+   </trkpt>
+   <trkpt lat="37.085620000000006" lon="-121.7925">
+    <ele>304.33000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.085460000000005" lon="-121.79272000000002">
+    <ele>309.79</ele>
+   </trkpt>
+   <trkpt lat="37.085330000000006" lon="-121.79313">
+    <ele>315.51</ele>
+   </trkpt>
+   <trkpt lat="37.08532" lon="-121.79310000000001">
+    <ele>315.51</ele>
+   </trkpt>
+   <trkpt lat="37.08532" lon="-121.79308">
+    <ele>315.08000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.085280000000004" lon="-121.79327">
+    <ele>318.97</ele>
+   </trkpt>
+   <trkpt lat="37.08523" lon="-121.7934">
+    <ele>318.97</ele>
+   </trkpt>
+   <trkpt lat="37.08471" lon="-121.79384">
+    <ele>330.62</ele>
+   </trkpt>
+   <trkpt lat="37.08462" lon="-121.79402">
+    <ele>331.82</ele>
+   </trkpt>
+   <trkpt lat="37.084610000000005" lon="-121.79434">
+    <ele>333.19000000000005</ele>
+   </trkpt>
+   <trkpt lat="37.08455" lon="-121.7947">
+    <ele>336.96000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.084480000000006" lon="-121.79479">
+    <ele>336.96000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.08429" lon="-121.79493000000001">
+    <ele>342.72</ele>
+   </trkpt>
+   <trkpt lat="37.08413" lon="-121.79516000000001">
+    <ele>346.30000000000007</ele>
+   </trkpt>
+   <trkpt lat="37.08408" lon="-121.79519">
+    <ele>347.14</ele>
+   </trkpt>
+   <trkpt lat="37.08402" lon="-121.79519">
+    <ele>348.34000000000003</ele>
+   </trkpt>
+   <trkpt lat="37.08428" lon="-121.79465">
+    <ele>349.89000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.084300000000006" lon="-121.79444000000001">
+    <ele>349.63000000000005</ele>
+   </trkpt>
+   <trkpt lat="37.08428" lon="-121.79384">
+    <ele>346.74000000000007</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

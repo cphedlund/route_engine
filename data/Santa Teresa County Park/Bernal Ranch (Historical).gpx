@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Bernal Ranch (Historical)</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3468366434969619996"/>
+ </metadata>
+ <trk>
+  <name>Bernal Ranch (Historical)</name>
+  <link href="https://www.strava.com/routes/3468366434969619996"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.226150000000004" lon="-121.79855">
+    <ele>65.64</ele>
+   </trkpt>
+   <trkpt lat="37.226220000000005" lon="-121.79843000000001">
+    <ele>65.69000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22648" lon="-121.79837">
+    <ele>64.09</ele>
+   </trkpt>
+   <trkpt lat="37.22648" lon="-121.79756">
+    <ele>62.32000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79693">
+    <ele>64.35000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22634" lon="-121.79686000000001">
+    <ele>64.35000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226350000000004" lon="-121.79686000000001">
+    <ele>64.34</ele>
+   </trkpt>
+   <trkpt lat="37.22626" lon="-121.79662">
+    <ele>65.30000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22612" lon="-121.79645000000001">
+    <ele>66.02000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22598" lon="-121.79622">
+    <ele>66.68</ele>
+   </trkpt>
+   <trkpt lat="37.22598" lon="-121.7959">
+    <ele>66.52000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22605" lon="-121.79572">
+    <ele>65.55000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22623" lon="-121.7955">
+    <ele>65.27000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79545000000002">
+    <ele>64.63000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79540000000001">
+    <ele>64.63000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79541">
+    <ele>64.63000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79545000000002">
+    <ele>64.72</ele>
+   </trkpt>
+   <trkpt lat="37.22623" lon="-121.7955">
+    <ele>65.27000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22605" lon="-121.79572">
+    <ele>65.55000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22598" lon="-121.7959">
+    <ele>66.52000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22598" lon="-121.79622">
+    <ele>66.68</ele>
+   </trkpt>
+   <trkpt lat="37.22612" lon="-121.79645000000001">
+    <ele>66.02000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22626" lon="-121.79662">
+    <ele>65.30000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226380000000006" lon="-121.79693">
+    <ele>63.27</ele>
+   </trkpt>
+   <trkpt lat="37.22648" lon="-121.79756">
+    <ele>62.32000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.22648" lon="-121.79837">
+    <ele>64.09</ele>
+   </trkpt>
+   <trkpt lat="37.226220000000005" lon="-121.79843000000001">
+    <ele>65.69000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.226150000000004" lon="-121.79856000000001">
+    <ele>65.64</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

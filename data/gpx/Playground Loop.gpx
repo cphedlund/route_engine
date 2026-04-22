@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Playground Loop</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3472743547636194272"/>
+ </metadata>
+ <trk>
+  <name>Playground Loop</name>
+  <link href="https://www.strava.com/routes/3472743547636194272"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.23809" lon="-121.96991000000001">
+    <ele>91.82000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23846" lon="-121.96957">
+    <ele>91.58000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23895500038157" lon="-121.96927000196814">
+    <ele>91.65</ele>
+   </trkpt>
+   <trkpt lat="37.239450000000005" lon="-121.96897000000001">
+    <ele>91.64000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23957" lon="-121.96910000000001">
+    <ele>91.44000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.239610000000006" lon="-121.96927000000001">
+    <ele>91.35</ele>
+   </trkpt>
+   <trkpt lat="37.23951" lon="-121.96953">
+    <ele>91.48</ele>
+   </trkpt>
+   <trkpt lat="37.23941000000001" lon="-121.96971">
+    <ele>91.51</ele>
+   </trkpt>
+   <trkpt lat="37.239230000000006" lon="-121.96997">
+    <ele>91.51</ele>
+   </trkpt>
+   <trkpt lat="37.23903" lon="-121.9702">
+    <ele>91.52</ele>
+   </trkpt>
+   <trkpt lat="37.238910000000004" lon="-121.97038">
+    <ele>91.52</ele>
+   </trkpt>
+   <trkpt lat="37.23877" lon="-121.97064">
+    <ele>91.50000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23866" lon="-121.97073">
+    <ele>91.50000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23859" lon="-121.97096">
+    <ele>91.57000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.238440000000004" lon="-121.97105">
+    <ele>91.74</ele>
+   </trkpt>
+   <trkpt lat="37.238440000000004" lon="-121.97106000000001">
+    <ele>91.75000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23832" lon="-121.97114">
+    <ele>91.82000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23823" lon="-121.97096">
+    <ele>91.87</ele>
+   </trkpt>
+   <trkpt lat="37.23819" lon="-121.97079000000001">
+    <ele>91.86000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23809" lon="-121.97064">
+    <ele>91.88</ele>
+   </trkpt>
+   <trkpt lat="37.238080000000004" lon="-121.97021000000001">
+    <ele>91.82000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.23809" lon="-121.96991000000001">
+    <ele>91.82000000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>

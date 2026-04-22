@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Baylands Rollers</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3468392706047505360"/>
+ </metadata>
+ <trk>
+  <name>Baylands Rollers</name>
+  <link href="https://www.strava.com/routes/3468392706047505360"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.41245" lon="-121.99901000000001">
+    <ele>1.93</ele>
+   </trkpt>
+   <trkpt lat="37.41283501175593" lon="-121.99804501490188">
+    <ele>1.59</ele>
+   </trkpt>
+   <trkpt lat="37.4132200156689" lon="-121.99708001988375">
+    <ele>1.6600000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.4136050117387" lon="-121.99611501494559">
+    <ele>1.6400000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.413990000000005" lon="-121.99515000000001">
+    <ele>0.8500000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41358" lon="-121.99508000000002">
+    <ele>-0.01</ele>
+   </trkpt>
+   <trkpt lat="37.41333" lon="-121.99495">
+    <ele>-0.18000000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41321000000001" lon="-121.99486000000002">
+    <ele>-0.18000000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.412980000000005" lon="-121.99455">
+    <ele>-0.18000000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41286" lon="-121.99424">
+    <ele>-0.08</ele>
+   </trkpt>
+   <trkpt lat="37.412760000000006" lon="-121.9941">
+    <ele>-0.08</ele>
+   </trkpt>
+   <trkpt lat="37.41264" lon="-121.99397">
+    <ele>0.0</ele>
+   </trkpt>
+   <trkpt lat="37.41252" lon="-121.99388">
+    <ele>0.0</ele>
+   </trkpt>
+   <trkpt lat="37.41232" lon="-121.99383000000002">
+    <ele>0.01</ele>
+   </trkpt>
+   <trkpt lat="37.41187" lon="-121.99361">
+    <ele>0.26</ele>
+   </trkpt>
+   <trkpt lat="37.411460000000005" lon="-121.99312">
+    <ele>0.48000000000000004</ele>
+   </trkpt>
+   <trkpt lat="37.41133" lon="-121.99307">
+    <ele>0.55</ele>
+   </trkpt>
+   <trkpt lat="37.41114" lon="-121.99302000000002">
+    <ele>0.7200000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41085" lon="-121.99296000000001">
+    <ele>1.0</ele>
+   </trkpt>
+   <trkpt lat="37.41085" lon="-121.99362">
+    <ele>0.64</ele>
+   </trkpt>
+   <trkpt lat="37.41096" lon="-121.99469">
+    <ele>0.9800000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.410940000000004" lon="-121.99495">
+    <ele>1.07</ele>
+   </trkpt>
+   <trkpt lat="37.41089" lon="-121.99527">
+    <ele>1.04</ele>
+   </trkpt>
+   <trkpt lat="37.41077000000001" lon="-121.99576">
+    <ele>0.68</ele>
+   </trkpt>
+   <trkpt lat="37.41067" lon="-121.99607">
+    <ele>0.55</ele>
+   </trkpt>
+   <trkpt lat="37.41057" lon="-121.99652">
+    <ele>0.12000000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.41051" lon="-121.99692">
+    <ele>0.18000000000000002</ele>
+   </trkpt>
+   <trkpt lat="37.41053" lon="-121.99728">
+    <ele>0.31</ele>
+   </trkpt>
+   <trkpt lat="37.410610000000005" lon="-121.99764">
+    <ele>0.84</ele>
+   </trkpt>
+   <trkpt lat="37.41082" lon="-121.998">
+    <ele>0.9400000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.410990000000005" lon="-121.99818">
+    <ele>0.67</ele>
+   </trkpt>
+   <trkpt lat="37.411405000109156" lon="-121.99842499855788">
+    <ele>0.59</ele>
+   </trkpt>
+   <trkpt lat="37.411820000000006" lon="-121.99867">
+    <ele>0.92</ele>
+   </trkpt>
+   <trkpt lat="37.412440000000004" lon="-121.99905000000001">
+    <ele>1.81</ele>
+   </trkpt>
+   <trkpt lat="37.41245" lon="-121.99901000000001">
+    <ele>1.93</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
