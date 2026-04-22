@@ -31,23 +31,34 @@ class OSMLayer:
 
     def load(self) -> None:
         if not self.path.exists():
-            print(f"[osm] WARNING: {self.path} not found, layer '{self.name}' disabled")
+            print(f"[osm] WARNING: {self.path} not found, layer '{self.name}' disabled", flush=True)
             return
 
-        with open(self.path) as f:
-            data = json.load(f)
+        try:
+            with open(self.path) as f:
+                data = json.load(f)
+        except Exception as e:
+            print(f"[osm] ERROR opening {self.path}: {type(e).__name__}: {e}", flush=True)
+            return
 
+        skipped = 0
         for feat in data.get("features", []):
             try:
                 geom = shape(feat["geometry"])
                 self.geometries.append(geom)
                 self.properties.append(feat.get("properties", {}))
             except Exception:
+                skipped += 1
                 continue
 
-        if self.geometries:
-            self.index = STRtree(self.geometries)
-        print(f"[osm] Loaded {len(self.geometries)} features from '{self.name}'")
+        try:
+            if self.geometries:
+                self.index = STRtree(self.geometries)
+        except Exception as e:
+            print(f"[osm] ERROR building index for '{self.name}': {type(e).__name__}: {e}", flush=True)
+            return
+
+        print(f"[osm] Loaded {len(self.geometries)} features from '{self.name}' (skipped {skipped})", flush=True)
 
     def features_near(self, lat: float, lng: float, radius_m: float = 100) -> list[dict]:
         """Return properties of features whose geometry is within radius_m of (lat,lng)."""
