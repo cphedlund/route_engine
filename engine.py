@@ -14,8 +14,8 @@ class Route:
     distance_miles: float
     elevation_gain: float
     surface_type: str
-    shade_pct: float          # 0-100
-    scenic_likelihood: float  # 0-1
+    shade_pct: float          # 0-100 (legacy; prefer osm_shade_pct)
+    scenic_likelihood: float  # 0-1 (legacy heuristic)
     proximity_miles: float
     route_type: str
     popularity: float         # 0-100 (optional signal)
@@ -25,6 +25,34 @@ class Route:
     max_grade_pct: Optional[float] = 0.0
     avg_grade_pct: Optional[float] = 0.0
     _start_point: Optional[Tuple[float, float]] = None
+    _centroid: Optional[Tuple[float, float]] = None
+    _path: Optional[str] = None
+    # ----------------------------------------------------------------
+    # OSM-derived fields (Santa Clara County, OpenStreetMap ground truth)
+    # All optional with safe defaults so legacy callers don't break.
+    # ----------------------------------------------------------------
+    osm_surface: str = "unknown"
+    osm_highway: str = "unknown"
+    osm_smoothness: str = ""
+    osm_bicycle_legal: bool = True
+    osm_horse_legal: bool = False
+    osm_dog_allowed: Optional[bool] = None
+    osm_technicality: float = 0.0      # 0-6 scale (mtb:scale or sac_scale derived)
+    osm_sac_scale: float = 0.0
+    osm_mtb_scale: float = 0.0
+    osm_has_trailhead_parking: bool = False
+    osm_free_parking: bool = False
+    osm_scenic_poi_count: int = 0
+    osm_water_count: int = 0
+    osm_drinking_water_count: int = 0
+    osm_restroom_count: int = 0
+    osm_shade_pct: int = 0
+    osm_park_name: str = ""
+    osm_park_operator: str = ""
+    osm_park_dog_policy: str = ""
+    osm_park_fee: str = ""
+    osm_picnic_count: int = 0
+    osm_camping_count: int = 0
 
 
 # Band thresholds (your spec)
@@ -33,16 +61,21 @@ BAND_2_MIN = 55.00
 BAND_3_MIN = 40.00   # below this is not recommended
 
 
-# Weights sum to 1.00 — redistributed to include difficulty
 DEFAULT_WEIGHTS = {
-    "mileage":    0.30,
-    "elevation":  0.18,
-    "views":      0.14,
-    "proximity":  0.10,
-    "shade":      0.08,
-    "crowds":     0.10,
-    "difficulty":  0.10,
+    "mileage":      0.22,
+    "elevation":    0.15,
+    "difficulty":   0.10,
+    "proximity":    0.10,
+    "views":        0.10,
+    "shade":        0.08,
+    "surface":      0.07,
+    "crowds":       0.05,
+    "facilities":   0.05,
+    "scenic_pois":  0.05,
+    "dog_friendly": 0.02,
+    "technicality": 0.01,
 }
+# Sum = 1.00
 
 
 def _clamp(x: float, lo: float, hi: float) -> float:
@@ -330,6 +363,134 @@ def _normalize_weights(weights: Dict[str, float]) -> Dict[str, float]:
         return w
     return {k: (v / total) for k, v in w.items()}
 
+# ============================================================
+# OSM-DERIVED SCORING DIMENSIONS
+# ============================================================
+
+# Surface preference token → set of OSM surface values that satisfy it
+_SURFACE_GROUPS = {
+    "paved":   {"paved", "asphalt", "concrete", "paving_stones"},
+    "dirt":    {"dirt", "earth", "ground", "mud", "unpaved"},
+    "gravel":  {"gravel", "fine_gravel", "compacted", "pebblestone"},
+    "rocky":   {"rock", "stone", "cobblestone"},
+    "any":     set(),  # matches everything
+}
+
+
+def _resolve_effective_surface(route: Route) -> str:
+    """
+    Blend OSM surface with legacy heuristic. Prefer OSM when it's not 'unknown',
+    fall back to the gpx_loader heuristic surface_type.
+    """
+    if route.osm_surface and route.osm_surface != "unknown":
+        return route.osm_surface
+    return route.surface_type or "unknown"
+
+
+def _surface_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Score how well the route's surface matches user preference.
+    Preference shape: prefs.get('surface_pref') in {'paved','dirt','gravel','rocky','any'} or None.
+    No preference → neutral 0.5 (doesn't penalize the route, doesn't reward it either).
+    """
+    surface_pref = prefs.get("surface_pref")
+    if not surface_pref or surface_pref == "any":
+        return 0.5
+
+    eff_surface = _resolve_effective_surface(route)
+    if eff_surface == "unknown":
+        return 0.4  # mild penalty for unknown surface when user has a preference
+
+    accepted = _SURFACE_GROUPS.get(surface_pref, set())
+    return 1.0 if eff_surface in accepted else 0.0
+
+
+def _facilities_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Reward routes with parking, restrooms, and water access.
+    Preference: prefs.get('wants_facilities') is bool. If False/None, light neutral score.
+    """
+    wants = bool(prefs.get("wants_facilities", False))
+    base = 0.0
+    if route.osm_has_trailhead_parking:
+        base += 0.35
+    if route.osm_restroom_count > 0:
+        base += 0.25
+    if route.osm_drinking_water_count > 0:
+        base += 0.15
+    if route.osm_picnic_count > 0:  # picnic tables / picnic sites along route
+        base += 0.15
+    if route.osm_water_count > 0:  # any water (creeks, etc.) is a small bonus
+        base += 0.10
+    score = _clamp(base, 0.0, 1.0)
+    # If user didn't ask, dampen toward neutral so we don't over-favor facility-rich routes
+    if not wants:
+        score = 0.3 + 0.4 * score  # squashes range to [0.3, 0.7]
+    return score
+
+
+def _scenic_pois_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Score based on count of OSM scenic POIs (peaks, viewpoints, waterfalls) along the route.
+    Saturates at 5+ POIs.
+    """
+    n = int(route.osm_scenic_poi_count or 0)
+    return _clamp(n / 5.0, 0.0, 1.0)
+
+
+def _dog_friendly_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Score for dog-friendliness. If user doesn't have a dog, returns neutral 0.5.
+    If they do, reward routes where dogs are allowed (route tag or park policy).
+    """
+    has_dog = bool(prefs.get("has_dog", False))
+    if not has_dog:
+        return 0.5
+
+    # Explicit positive signals
+    if route.osm_dog_allowed is True:
+        return 1.0
+    if route.osm_park_dog_policy in ("yes", "leashed"):
+        return 1.0
+
+    # Explicit negative signals
+    if route.osm_dog_allowed is False:
+        return 0.0
+    if route.osm_park_dog_policy == "no":
+        return 0.0
+
+    # No info — small uncertainty penalty
+    return 0.4
+
+
+def _technicality_score(route: Route, prefs: Dict[str, Any]) -> float:
+    """
+    Score how well the route's technicality matches user preference.
+    Preference shape: prefs.get('technicality_pref') in {'low','medium','high'} or None.
+    Uses OSM mtb:scale/sac_scale when available, falls back to legacy heuristic technicality.
+    """
+    pref = prefs.get("technicality_pref")
+    if not pref:
+        return 0.5  # neutral
+
+    # Resolve effective technicality on a 0-6 scale
+    if route.osm_technicality and route.osm_technicality > 0:
+        tech_score = route.osm_technicality
+    else:
+        # Fall back to legacy heuristic: map text to a 0-6 scale
+        legacy_map = {
+            "non-technical": 1.0, "moderate": 2.5,
+            "technical": 4.0, "very technical": 5.5,
+        }
+        tech_score = legacy_map.get(route.technicality, 2.5)
+
+    # User preference targets
+    targets = {"low": 1.5, "medium": 3.0, "high": 5.0}
+    target = targets.get(pref, 3.0)
+
+    # Distance from target → score (1.0 if exact match, decays linearly)
+    dist = abs(tech_score - target)
+    return _clamp(1.0 - (dist / 4.0), 0.0, 1.0)
 
 def _gradient_score(route: Route, prefs: Dict[str, Any]) -> float:
     """Score steepness using real per-segment grade data from GPX."""
@@ -483,6 +644,33 @@ def select_routes(
         if bbox_filtered:
             candidates = bbox_filtered
 
+    # ============================================================
+    # OSM HARD GATES (absolute filters, not weighted)
+    # ============================================================
+
+    # Bike-legal gate: exclude routes where OSM marks bicycles=no
+    if prefs.get("require_bike_legal"):
+        candidates = [r for r in candidates if r.osm_bicycle_legal]
+
+    # Dog-required gate: exclude routes that prohibit dogs
+    if prefs.get("require_dog_allowed"):
+        candidates = [
+            r for r in candidates
+            if r.osm_dog_allowed is not False
+            and r.osm_park_dog_policy != "no"
+        ]
+
+    # Wheelchair / accessibility gate: paved surfaces only
+    if prefs.get("require_wheelchair_accessible"):
+        ACCESSIBLE_SURFACES = {"paved", "asphalt", "concrete", "paving_stones"}
+        candidates = [
+            r for r in candidates
+            if (r.osm_surface in ACCESSIBLE_SURFACES) or (r.surface_type == "paved")
+        ]
+
+    if not candidates:
+        return []
+
     views_pref = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
     scenic_offsets_elev = (views_pref >= 0.6)
     scenic_bonus_factor = 0.25
@@ -511,24 +699,45 @@ def select_routes(
                 new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
                 0.0, 1.0,
             )
+        new_elev_score = _clamp(
+                new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
+                0.0, 1.0,
+            )
 
         sub["elevation"] = new_elev_score
         sub["elev_gain"] = _clamp(elev_gain_score, 0.0, 1.0)
         sub["steepness"] = gradient
         sub["views"] = _views_score(scenic_eff, prefs)
-        sub["shade"] = _shade_score(r.shade_pct, prefs)
+        sub["views"] = _views_score(scenic_eff, prefs)
+        # Use OSM shade if available, fall back to legacy heuristic shade_pct
+        effective_shade = r.osm_shade_pct if r.osm_shade_pct > 0 else r.shade_pct
+        sub["shade"] = _shade_score(effective_shade, prefs)
         sub["proximity"] = _proximity_soft_score(live_prox, max_prox)
         sub["crowds"] = _crowds_score(r.popularity, prefs)
         sub["difficulty"] = _difficulty_score(r, prefs)
 
+        # ----------------------------------------------------------
+        # OSM-driven sub-scores
+        # ----------------------------------------------------------
+        sub["surface"]      = _surface_score(r, prefs)
+        sub["facilities"]   = _facilities_score(r, prefs)
+        sub["scenic_pois"]  = _scenic_pois_score(r, prefs)
+        sub["dog_friendly"] = _dog_friendly_score(r, prefs)
+        sub["technicality"] = _technicality_score(r, prefs)
+
         score_0_1 = 0.0
-        score_0_1 += w.get("mileage", 0.0)    * sub["mileage"]
-        score_0_1 += w.get("elevation", 0.0)   * sub["elevation"]
-        score_0_1 += w.get("views", 0.0)       * sub["views"]
-        score_0_1 += w.get("shade", 0.0)       * sub["shade"]
-        score_0_1 += w.get("proximity", 0.0)   * sub["proximity"]
-        score_0_1 += w.get("crowds", 0.0)      * sub["crowds"]
+        score_0_1 += w.get("mileage", 0.0)      * sub["mileage"]
+        score_0_1 += w.get("elevation", 0.0)    * sub["elevation"]
+        score_0_1 += w.get("views", 0.0)        * sub["views"]
+        score_0_1 += w.get("shade", 0.0)        * sub["shade"]
+        score_0_1 += w.get("proximity", 0.0)    * sub["proximity"]
+        score_0_1 += w.get("crowds", 0.0)       * sub["crowds"]
         score_0_1 += w.get("difficulty", 0.0)   * sub["difficulty"]
+        score_0_1 += w.get("surface", 0.0)      * sub["surface"]
+        score_0_1 += w.get("facilities", 0.0)   * sub["facilities"]
+        score_0_1 += w.get("scenic_pois", 0.0)  * sub["scenic_pois"]
+        score_0_1 += w.get("dog_friendly", 0.0) * sub["dog_friendly"]
+        score_0_1 += w.get("technicality", 0.0) * sub["technicality"]
 
         conformity = round(_clamp(score_0_1, 0.0, 1.0) * 100.0, 2)
         band = _score_band(conformity)

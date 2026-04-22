@@ -12,6 +12,7 @@ from typing import Dict, List, Optional, Any, Set, Tuple
 from dotenv import load_dotenv
 from typing import Optional, List, Dict, Literal
 from pydantic import BaseModel, Field
+import osm_layers
 
 load_dotenv(override=True)
 
@@ -28,6 +29,10 @@ from fastapi import Header, HTTPException
 # App + CORS
 # -----------------------------
 app = FastAPI(title="Route Selection Engine")
+
+@app.on_event("startup")
+async def startup_event():
+    pass  # OSM layers now lazy-load via gpx_loader
 
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -401,6 +406,78 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
         elif _contains_any(q, ["extreme", "expert", "very hard", "brutal", "grueling"]):
             prefs["difficulty_preference"] = "very hard"
 
+    # ========================================================
+    # OSM-DRIVEN PREFERENCES (Stage C)
+    # ========================================================
+
+    # Surface preference (paved / dirt / gravel / rocky)
+    if prefs.get("surface_pref") is None:
+        if _contains_any(q, ["paved", "asphalt", "concrete", "road bike", "stroller", "smooth surface"]):
+            prefs["surface_pref"] = "paved"
+        elif _contains_any(q, ["dirt", "trail", "singletrack", "single track", "off road", "off-road"]):
+            prefs["surface_pref"] = "dirt"
+        elif _contains_any(q, ["gravel", "fire road", "fireroad", "doubletrack", "double track"]):
+            prefs["surface_pref"] = "gravel"
+        elif _contains_any(q, ["rocky", "rock", "boulder", "scrambly", "scramble"]):
+            prefs["surface_pref"] = "rocky"
+
+    # Facilities (parking, restrooms, water)
+    if prefs.get("wants_facilities") is None:
+        if _contains_any(q, [
+            "parking", "with parking", "trailhead parking", "park nearby",
+            "restroom", "bathroom", "toilet", "facilities", "amenities",
+            "water fountain", "drinking water", "refill", "water available",
+            "with amenities", "well-equipped",
+        ]):
+            prefs["wants_facilities"] = True
+
+    # Scenic POIs (peaks, viewpoints, waterfalls)
+    if prefs.get("views_preference") is None or prefs.get("views_preference") == 0.8:
+        if _contains_any(q, [
+            "waterfall", "waterfalls", "peak", "summit", "viewpoint",
+            "overlook", "lookout", "scenic point", "vista point",
+        ]):
+            prefs["views_preference"] = 0.85
+
+    # Dog-friendly (soft preference + hard requirement)
+    if prefs.get("has_dog") is None:
+        if _contains_any(q, [
+            "dog", "dogs", "with my dog", "with dog", "puppy", "pup",
+            "dog friendly", "dog-friendly", "bring my dog",
+        ]):
+            prefs["has_dog"] = True
+            # If user explicitly says "must allow dogs" or similar → hard gate
+            if _contains_any(q, [
+                "must allow dogs", "dogs required", "dogs must", "dogs allowed only",
+                "where dogs are allowed",
+            ]):
+                prefs["require_dog_allowed"] = True
+
+    # Bike-legal (soft preference becomes hard gate when intent is clear)
+    if prefs.get("require_bike_legal") is None:
+        if _contains_any(q, [
+            "bike", "biking", "cycling", "cyclist", "mtb", "mountain bike",
+            "mountain biking", "ride", "riding", "gravel bike", "road bike",
+        ]):
+            prefs["require_bike_legal"] = True
+
+    # Wheelchair / stroller / accessibility (always hard gate)
+    if prefs.get("require_wheelchair_accessible") is None:
+        if _contains_any(q, [
+            "wheelchair", "accessible", "ada", "stroller", "stroller-friendly",
+            "wheelchair accessible", "paved only", "paved path only",
+        ]):
+            prefs["require_wheelchair_accessible"] = True
+
+    # Technicality preference
+    if prefs.get("technicality_pref") is None:
+        if _contains_any(q, ["non-technical", "non technical", "smooth", "easy footing", "beginner friendly"]):
+            prefs["technicality_pref"] = "low"
+        elif _contains_any(q, ["technical", "rooty", "rocky terrain", "rugged"]):
+            prefs["technicality_pref"] = "high"
+        elif _contains_any(q, ["moderate technical", "intermediate technical"]):
+            prefs["technicality_pref"] = "medium"
+
     return prefs
 
 
@@ -411,6 +488,10 @@ def _prefs_have_enough_signal(prefs: Dict[str, Any]) -> bool:
         "shade_preference", "views_preference", "crowds_preference",
         "max_proximity", "preferred_surface", "allowed_surface_types",
         "location", "difficulty_preference",
+        # OSM-driven preferences
+        "surface_pref", "wants_facilities", "has_dog",
+        "require_bike_legal", "require_dog_allowed",
+        "require_wheelchair_accessible", "technicality_pref",
     ]
     count = 0
     for k in keys:

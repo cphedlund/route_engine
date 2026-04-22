@@ -3,6 +3,8 @@ import hashlib
 from pathlib import Path
 from typing import List, Dict, Any, Tuple, Optional
 
+import osm_layers
+
 import gpxpy
 
 
@@ -389,6 +391,12 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 route_type=route_type,
             )
 
+# =========================================================
+            # OSM-DERIVED ENRICHMENT (Santa Clara County layers)
+            # =========================================================
+            track_latlng = [(p[0], p[1]) for p in pts]
+            osm_data = osm_layers.enrich_route(track_latlng)
+
             routes.append({
                 # route_id is guaranteed stable + unique
                 "route_id":    rid,
@@ -405,8 +413,32 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 "difficulty":     difficulty,           # was "unknown"
                 "technicality":   technicality,         # was "unknown"
                 # Computed gradient profile
-                "max_grade_pct":  round(max_grade_pct, 1),
+               "max_grade_pct":  round(max_grade_pct, 1),
                 "avg_grade_pct":  round(avg_grade_pct, 1),
+                # OSM-derived fields (ground truth from OpenStreetMap)
+                # OSM-derived fields (ground truth from OpenStreetMap, Santa Clara County)
+                "osm_surface":               osm_data.get("osm_surface", "unknown"),
+                "osm_highway":               osm_data.get("osm_highway", "unknown"),
+                "osm_smoothness":            osm_data.get("osm_smoothness", ""),
+                "osm_bicycle_legal":         osm_data.get("osm_bicycle_legal", True),
+                "osm_horse_legal":           osm_data.get("osm_horse_legal", False),
+                "osm_dog_allowed":           osm_data.get("osm_dog_allowed", None),
+                "osm_technicality":          osm_data.get("osm_technicality", 0),
+                "osm_sac_scale":             osm_data.get("osm_sac_scale", 0),
+                "osm_mtb_scale":             osm_data.get("osm_mtb_scale", 0),
+                "osm_has_trailhead_parking": osm_data.get("osm_has_trailhead_parking", False),
+                "osm_free_parking":          osm_data.get("osm_free_parking", False),
+                "osm_scenic_poi_count":      osm_data.get("osm_scenic_poi_count", 0),
+                "osm_water_count":           osm_data.get("osm_water_count", 0),
+                "osm_drinking_water_count":  osm_data.get("osm_drinking_water_count", 0),
+                "osm_restroom_count":        osm_data.get("osm_restroom_count", 0),
+                "osm_shade_pct":             osm_data.get("osm_shade_pct", 0),
+                "osm_park_name":             osm_data.get("osm_park_name", ""),
+                "osm_park_operator":         osm_data.get("osm_park_operator", ""),
+                "osm_park_dog_policy":       osm_data.get("osm_park_dog_policy", ""),
+                "osm_park_fee":              osm_data.get("osm_park_fee", ""),
+                "osm_picnic_count":          osm_data.get("osm_picnic_count", 0),
+                "osm_camping_count":         osm_data.get("osm_camping_count", 0),
                 # Internal-only fields
                 "_centroid":    (lat_avg, lon_avg),
                 "_start_point": start_point,
@@ -435,4 +467,41 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
         print(f"  Technicality: {tech_counts}")
         print(f"  Scenic avg:   {avg_scenic:.3f}  min={min(scenic_vals):.3f}  max={max(scenic_vals):.3f}")
 
+# OSM summary
+        osm_surf_counts = {}
+        osm_highway_counts = {}
+        osm_park_counts = {}
+        osm_parking_yes = 0
+        osm_scenic_total = 0
+        osm_water_total = 0
+        osm_drinking_total = 0
+        osm_restroom_total = 0
+        osm_shade_vals = []
+        osm_routes_in_park = 0
+        for r in routes:
+            osm_surf_counts[r.get("osm_surface", "unknown")] = osm_surf_counts.get(r.get("osm_surface", "unknown"), 0) + 1
+            osm_highway_counts[r.get("osm_highway", "unknown")] = osm_highway_counts.get(r.get("osm_highway", "unknown"), 0) + 1
+            park = r.get("osm_park_name", "") or "(none)"
+            osm_park_counts[park] = osm_park_counts.get(park, 0) + 1
+            if r.get("osm_has_trailhead_parking"):
+                osm_parking_yes += 1
+            if r.get("osm_park_name"):
+                osm_routes_in_park += 1
+            osm_scenic_total += r.get("osm_scenic_poi_count", 0)
+            osm_water_total += r.get("osm_water_count", 0)
+            osm_drinking_total += r.get("osm_drinking_water_count", 0)
+            osm_restroom_total += r.get("osm_restroom_count", 0)
+            osm_shade_vals.append(r.get("osm_shade_pct", 0))
+        avg_shade = sum(osm_shade_vals) / len(osm_shade_vals) if osm_shade_vals else 0
+        print(f"[OSM] Surface:        {osm_surf_counts}")
+        print(f"[OSM] Highway type:   {osm_highway_counts}")
+        print(f"[OSM] Trailhead parking: {osm_parking_yes}/{len(routes)} routes")
+        print(f"[OSM] Within named park: {osm_routes_in_park}/{len(routes)} routes")
+        print(f"[OSM] Avg shade:      {avg_shade:.1f}%")
+        print(f"[OSM] Water features: {osm_water_total} ({osm_drinking_total} drinking)")
+        print(f"[OSM] Restrooms near routes: {osm_restroom_total}")
+        print(f"[OSM] Scenic POIs:    {osm_scenic_total}")
+        # Top 5 parks by route count
+        top_parks = sorted(osm_park_counts.items(), key=lambda x: -x[1])[:5]
+        print(f"[OSM] Top parks:      {dict(top_parks)}")
     return routes
