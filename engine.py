@@ -569,6 +569,14 @@ def select_routes(
 
     # Hard gates
     candidates: List[Route] = []
+    # DEBUG: confirm what we received
+    if routes:
+        sample = next((r for r in routes if r.name == "Summit Rock Climb"), None)
+        if sample:
+            print(f"[DEBUG INPUT] Summit Rock Climb received by select_routes: "
+                  f"osm_shade_pct={sample.osm_shade_pct}, "
+                  f"osm_surface={sample.osm_surface}, "
+                  f"osm_park_name={sample.osm_park_name}", flush=True)
     for r in routes:
         if has_user_location and r._start_point is not None:
             live_prox = haversine_miles((user_lat, user_lng), r._start_point)
