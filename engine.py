@@ -569,14 +569,7 @@ def select_routes(
 
     # Hard gates
     candidates: List[Route] = []
-    # DEBUG: confirm what we received
-    if routes:
-        sample = next((r for r in routes if r.name == "Summit Rock Climb"), None)
-        if sample:
-            print(f"[DEBUG INPUT] Summit Rock Climb received by select_routes: "
-                  f"osm_shade_pct={sample.osm_shade_pct}, "
-                  f"osm_surface={sample.osm_surface}, "
-                  f"osm_park_name={sample.osm_park_name}", flush=True)
+    
     for r in routes:
         if has_user_location and r._start_point is not None:
             live_prox = haversine_miles((user_lat, user_lng), r._start_point)
@@ -719,8 +712,6 @@ def select_routes(
         sub["views"] = _views_score(scenic_eff, prefs)
         # Use OSM shade if available, fall back to legacy heuristic shade_pct
         effective_shade = r.osm_shade_pct if r.osm_shade_pct > 0 else r.shade_pct
-        if r.name == "Summit Rock Climb":
-            print(f"[DEBUG SHADE] {r.name}: osm_shade_pct={r.osm_shade_pct}, legacy={r.shade_pct}, effective={effective_shade}", flush=True)
         sub["shade"] = _shade_score(effective_shade, prefs)
         sub["proximity"] = _proximity_soft_score(live_prox, max_prox)
         sub["crowds"] = _crowds_score(r.popularity, prefs)

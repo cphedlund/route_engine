@@ -231,7 +231,31 @@ class RouteIn(BaseModel):
     avg_grade_pct: float = 0.0
     start_lat: Optional[float] = None
     start_lng: Optional[float] = None
-
+    # ----------------------------------------------------------------
+    # OSM-derived fields (must mirror Route dataclass defaults)
+    # ----------------------------------------------------------------
+    osm_surface: str = "unknown"
+    osm_highway: str = "unknown"
+    osm_smoothness: str = ""
+    osm_bicycle_legal: bool = True
+    osm_horse_legal: bool = False
+    osm_dog_allowed: Optional[bool] = None
+    osm_technicality: float = 0.0
+    osm_sac_scale: float = 0.0
+    osm_mtb_scale: float = 0.0
+    osm_has_trailhead_parking: bool = False
+    osm_free_parking: bool = False
+    osm_scenic_poi_count: int = 0
+    osm_water_count: int = 0
+    osm_drinking_water_count: int = 0
+    osm_restroom_count: int = 0
+    osm_shade_pct: int = 0
+    osm_park_name: str = ""
+    osm_park_operator: str = ""
+    osm_park_dog_policy: str = ""
+    osm_park_fee: str = ""
+    osm_picnic_count: int = 0
+    osm_camping_count: int = 0
     def to_engine_route(self) -> Route:
         d = self.model_dump()
         start_lat = d.pop("start_lat", None)

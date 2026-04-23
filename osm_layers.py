@@ -13,10 +13,6 @@ from shapely.geometry import shape, Point
 from shapely.strtree import STRtree
 
 DATA_DIR = Path(__file__).parent / "data" / "osm"
-print(f"[OSM PATH DEBUG] DATA_DIR={DATA_DIR.resolve()}, exists={DATA_DIR.exists()}", flush=True)
-if DATA_DIR.exists():
-    files = list(DATA_DIR.glob("*.geojson"))
-    print(f"[OSM PATH DEBUG] Found {len(files)} geojson files", flush=True)
 
 
 class OSMLayer:
@@ -139,14 +135,6 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     """
     if not track_points:
         return {}
-        
-        # DEBUG: confirm enrichment is actually running
-    if not hasattr(enrich_route, "_debug_logged"):
-        enrich_route._debug_logged = True
-        sample = LANDCOVER.features_near(track_points[0][0], track_points[0][1], radius_m=100)
-        print(f"[ENRICH DEBUG] First call: track_points={len(track_points)}, "
-              f"LANDCOVER.index is None: {LANDCOVER.index is None}, "
-              f"sample landcover hits at start: {len(sample)}", flush=True)
         
     # Sample at most 50 points along the route for tag inference
     step = max(1, len(track_points) // 50)
