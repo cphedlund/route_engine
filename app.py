@@ -592,16 +592,47 @@ def _validate_and_clamp_prefs(p: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(loc, str) and loc.strip():
         out["location"] = loc.strip()
 
-    # Difficulty preference validation (NEW - 1b)
+   # Difficulty preference validation (NEW - 1b)
     dp = p.get("difficulty_preference")
     if isinstance(dp, str):
         dpn = dp.strip().lower()
         if dpn in {"easy", "moderate", "hard", "very hard"}:
             out["difficulty_preference"] = dpn
 
+    # Intent validation
+    it = p.get("intent")
+    if isinstance(it, str):
+        itn = it.strip().lower()
+        if itn in {"loop", "out-and-back"}:
+            out["intent"] = itn
+
+    # OSM-driven preferences
+    spref = p.get("surface_pref")
+    if isinstance(spref, str):
+        spn = spref.strip().lower()
+        if spn in {"paved", "dirt", "gravel", "rocky", "any"}:
+            out["surface_pref"] = spn
+
+    tpref = p.get("technicality_pref")
+    if isinstance(tpref, str):
+        tpn = tpref.strip().lower()
+        if tpn in {"low", "medium", "high"}:
+            out["technicality_pref"] = tpn
+
+    # Boolean OSM flags
+    for bool_field in ("wants_facilities", "has_dog",
+                       "require_bike_legal", "require_dog_allowed",
+                       "require_wheelchair_accessible"):
+        bv = p.get(bool_field)
+        if isinstance(bv, bool):
+            out[bool_field] = bv
+
     w = p.get("weights")
     if isinstance(w, dict):
-        allowed = {"mileage", "elevation", "views", "proximity", "shade", "crowds", "difficulty"}
+        allowed = {"mileage", "elevation", "views", "proximity", "shade", "crowds", "difficulty",
+            # OSM-driven dimensions
+            "surface", "facilities", "scenic_pois", "dog_friendly", "technicality",
+        }
         w_out = {}
         for k, v in w.items():
             if k in allowed:
@@ -722,6 +753,11 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
         "target_elevation_gain", "max_elevation",
         "shade_preference", "views_preference", "crowds_preference",
         "max_proximity", "preferred_surface", "location", "weights",
+        "intent", "difficulty_preference",
+        # OSM-driven preferences
+        "surface_pref", "wants_facilities", "has_dog",
+        "require_bike_legal", "require_dog_allowed",
+        "require_wheelchair_accessible", "technicality_pref",
     ]
     weights_required = ["mileage", "elevation", "views", "proximity", "shade", "crowds"]
 
@@ -753,6 +789,35 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
                         "preferred_surface": {
                             "anyOf": [
                                 {"type": "string", "enum": ["dirt", "paved", "mixed"]},
+                                {"type": "null"},
+                            ]
+                        },
+                        "intent": {
+                            "anyOf": [
+                                {"type": "string", "enum": ["loop", "out-and-back"]},
+                                {"type": "null"},
+                            ]
+                        },
+                        "difficulty_preference": {
+                            "anyOf": [
+                                {"type": "string", "enum": ["easy", "moderate", "hard", "very hard"]},
+                                {"type": "null"},
+                            ]
+                        },
+                        "surface_pref": {
+                            "anyOf": [
+                                {"type": "string", "enum": ["paved", "dirt", "gravel", "rocky", "any"]},
+                                {"type": "null"},
+                            ]
+                        },
+                        "wants_facilities":              {"type": ["boolean", "null"]},
+                        "has_dog":                       {"type": ["boolean", "null"]},
+                        "require_bike_legal":            {"type": ["boolean", "null"]},
+                        "require_dog_allowed":           {"type": ["boolean", "null"]},
+                        "require_wheelchair_accessible": {"type": ["boolean", "null"]},
+                        "technicality_pref": {
+                            "anyOf": [
+                                {"type": "string", "enum": ["low", "medium", "high"]},
                                 {"type": "null"},
                             ]
                         },
