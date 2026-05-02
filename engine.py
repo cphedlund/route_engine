@@ -645,6 +645,17 @@ def select_routes(
         if bbox_filtered:
             candidates = bbox_filtered
 
+    park_filter = prefs.get("park_filter")
+    if park_filter:
+        target = _norm_text(park_filter).replace(".", "").replace(",", "")
+        candidates = [
+            r for r in candidates
+            if _norm_text(r.osm_park_name).replace(".", "").replace(",", "") == target
+        ]
+
+    if not candidates:
+        return []
+
     # ============================================================
     # OSM HARD GATES (absolute filters, not weighted)
     # ============================================================

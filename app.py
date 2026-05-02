@@ -344,9 +344,70 @@ ELEV_P25  = _percentile(_ELEV, 25)
 ELEV_P75  = _percentile(_ELEV, 75)
 
 
+PARK_ALIASES: Dict[str, str] = {
+    "almaden quicksilver": "Almaden Quicksilver County Park",
+    "quicksilver": "Almaden Quicksilver County Park",
+    "almaden": "Almaden Quicksilver County Park",
+    "joseph d grant": "Joseph D. Grant County Park",
+    "joseph d. grant": "Joseph D. Grant County Park",
+    "joseph grant": "Joseph D. Grant County Park",
+    "jdg": "Joseph D. Grant County Park",
+    "grant park": "Joseph D. Grant County Park",
+    "grant ranch": "Joseph D. Grant County Park",
+    "mount madonna": "Mount Madonna County Park",
+    "mt madonna": "Mount Madonna County Park",
+    "mt. madonna": "Mount Madonna County Park",
+    "madonna": "Mount Madonna County Park",
+    "uvas canyon": "Uvas Canyon County Park",
+    "uvas": "Uvas Canyon County Park",
+    "santa teresa": "Santa Teresa County Park",
+    "sanborn": "Sanborn County Park",
+    "calero": "Calero County Park",
+    "coyote lake": "Coyote Lake - Harvey Bear Ranch County Park",
+    "harvey bear": "Coyote Lake - Harvey Bear Ranch County Park",
+    "coyote lake harvey bear": "Coyote Lake - Harvey Bear Ranch County Park",
+    "ed r levin": "Ed R. Levin County Park",
+    "ed r. levin": "Ed R. Levin County Park",
+    "ed levin": "Ed R. Levin County Park",
+    "levin": "Ed R. Levin County Park",
+    "hellyer": "Hellyer County Park",
+    "lexington reservoir": "Lexington Reservoir County Park",
+    "lexington": "Lexington Reservoir County Park",
+    "los gatos creek": "Los Gatos Creek County Park",
+    "lgct": "Los Gatos Creek County Park",
+    "martial cottle": "Martial Cottle Park",
+    "stevens creek": "Stevens Creek County Park",
+    "upper stevens creek": "Upper Stevens Creek County Park",
+    "vasona": "Vasona Lake County Park",
+    "villa montalvo": "Villa Montalvo County Park",
+    "montalvo": "Villa Montalvo County Park",
+    "sunnyvale baylands": "Sunnyvale Baylands Park",
+    "baylands": "Sunnyvale Baylands Park",
+    "alviso marina": "Alviso Marina County Park",
+    "alviso": "Alviso Marina County Park",
+    "anderson lake": "Anderson Lake County Park",
+    "anderson": "Anderson Lake County Park",
+    "almaden lake": "Almaden Lake Park",
+}
+
+
+def _extract_park_filter(query: str) -> Optional[str]:
+    q = _norm_text(query)
+    for alias in sorted(PARK_ALIASES.keys(), key=len, reverse=True):
+        pattern = r"(?:^|[^a-z])" + re.escape(alias) + r"(?:[^a-z]|$)"
+        if re.search(pattern, q):
+            return PARK_ALIASES[alias]
+    return None
+
+
 def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     q = _norm_text(query)
     prefs = dict(base_prefs or {})
+
+    if prefs.get("park_filter") is None:
+        park = _extract_park_filter(query)
+        if park:
+            prefs["park_filter"] = park
 
     # Distance: explicit numbers win
     miles_from_text: Optional[float] = None
@@ -591,6 +652,10 @@ def _validate_and_clamp_prefs(p: Dict[str, Any]) -> Dict[str, Any]:
     loc = p.get("location")
     if isinstance(loc, str) and loc.strip():
         out["location"] = loc.strip()
+
+    pf = p.get("park_filter")
+    if isinstance(pf, str) and pf.strip():
+        out["park_filter"] = pf.strip()
 
    # Difficulty preference validation (NEW - 1b)
     dp = p.get("difficulty_preference")
