@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx creator="StravaGPX" version="1.1" xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd">
+ <metadata>
+  <name>Dog Park Loop</name>
+  <author>
+   <name>Carson Hedlund</name>
+   <link href="https://www.strava.com/athletes/37463948"/>
+  </author>
+  <copyright author="OpenStreetMap contributors">
+   <year>2020</year>
+   <license>https://www.openstreetmap.org/copyright</license>
+  </copyright>
+  <link href="https://www.strava.com/routes/3461203866388619712"/>
+ </metadata>
+ <trk>
+  <name>Dog Park Loop</name>
+  <link href="https://www.strava.com/routes/3461203866388619712"/>
+  <type>running</type>
+  <trkseg>
+   <trkpt lat="37.268640000000005" lon="-121.95060000000001">
+    <ele>70.35000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.268640000000005" lon="-121.95014">
+    <ele>70.21000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.268660000000004" lon="-121.94996">
+    <ele>70.21000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.268640000000005" lon="-121.94983">
+    <ele>70.12</ele>
+   </trkpt>
+   <trkpt lat="37.26868" lon="-121.94974">
+    <ele>70.12</ele>
+   </trkpt>
+   <trkpt lat="37.268750000000004" lon="-121.94965">
+    <ele>69.91</ele>
+   </trkpt>
+   <trkpt lat="37.26892" lon="-121.94965">
+    <ele>69.68</ele>
+   </trkpt>
+   <trkpt lat="37.269110000000005" lon="-121.94977000000002">
+    <ele>69.63000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.269270000000006" lon="-121.94978">
+    <ele>69.61</ele>
+   </trkpt>
+   <trkpt lat="37.26944" lon="-121.94974">
+    <ele>69.56</ele>
+   </trkpt>
+   <trkpt lat="37.26952" lon="-121.94969">
+    <ele>69.56</ele>
+   </trkpt>
+   <trkpt lat="37.26963000000001" lon="-121.9496">
+    <ele>69.39</ele>
+   </trkpt>
+   <trkpt lat="37.269690000000004" lon="-121.94946000000002">
+    <ele>69.34</ele>
+   </trkpt>
+   <trkpt lat="37.27016000004964" lon="-121.94941500027699">
+    <ele>69.0</ele>
+   </trkpt>
+   <trkpt lat="37.270630000000004" lon="-121.94937000000002">
+    <ele>69.06</ele>
+   </trkpt>
+   <trkpt lat="37.27087" lon="-121.94933">
+    <ele>68.98</ele>
+   </trkpt>
+   <trkpt lat="37.270630000000004" lon="-121.94937000000002">
+    <ele>69.12</ele>
+   </trkpt>
+   <trkpt lat="37.27058" lon="-121.94943">
+    <ele>69.12</ele>
+   </trkpt>
+   <trkpt lat="37.270540000000004" lon="-121.94952">
+    <ele>69.12</ele>
+   </trkpt>
+   <trkpt lat="37.27056" lon="-121.94980000000001">
+    <ele>69.23</ele>
+   </trkpt>
+   <trkpt lat="37.27051" lon="-121.94996">
+    <ele>69.4</ele>
+   </trkpt>
+   <trkpt lat="37.270480000000006" lon="-121.95004000000002">
+    <ele>69.4</ele>
+   </trkpt>
+   <trkpt lat="37.269955000090846" lon="-121.9502700016614">
+    <ele>69.60000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.26943" lon="-121.9505">
+    <ele>69.91</ele>
+   </trkpt>
+   <trkpt lat="37.269400000000005" lon="-121.95055">
+    <ele>69.91</ele>
+   </trkpt>
+   <trkpt lat="37.269330000000004" lon="-121.95059">
+    <ele>70.11</ele>
+   </trkpt>
+   <trkpt lat="37.268910000000005" lon="-121.95060000000001">
+    <ele>70.21000000000001</ele>
+   </trkpt>
+   <trkpt lat="37.268730000000005" lon="-121.95054">
+    <ele>70.23</ele>
+   </trkpt>
+   <trkpt lat="37.268640000000005" lon="-121.95060000000001">
+    <ele>70.35000000000001</ele>
+   </trkpt>
+  </trkseg>
+ </trk>
+</gpx>
