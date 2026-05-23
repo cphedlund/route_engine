@@ -711,15 +711,10 @@ def select_routes(
                 new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
                 0.0, 1.0,
             )
-        new_elev_score = _clamp(
-                new_elev_score + scenic_bonus_factor * _clamp(scenic_eff, 0.0, 1.0),
-                0.0, 1.0,
-            )
 
         sub["elevation"] = new_elev_score
         sub["elev_gain"] = _clamp(elev_gain_score, 0.0, 1.0)
         sub["steepness"] = gradient
-        sub["views"] = _views_score(scenic_eff, prefs)
         sub["views"] = _views_score(scenic_eff, prefs)
         # Use OSM shade if available, fall back to legacy heuristic shade_pct
         effective_shade = r.osm_shade_pct if r.osm_shade_pct > 0 else r.shade_pct
@@ -819,8 +814,42 @@ def select_routes(
             "score_band":      band,
             "sub_scores":      sub,
             "explanation_bits": explain_unique,
+            "osm_park_name":   r.osm_park_name,
         })
 
     results.sort(key=lambda x: x["conformity_score"], reverse=True)
+
+    # Park diversity: reorder so no single park dominates the top results
+    MAX_PER_PARK = 3
+    TOP_N = 10
+    if len(results) > TOP_N:
+        top_slice = results[:TOP_N]
+        rest = results[TOP_N:]
+        diverse: List[Dict[str, Any]] = []
+        deferred: List[Dict[str, Any]] = []
+        park_counts: Dict[str, int] = {}
+        for item in top_slice:
+            park = item.get("osm_park_name", "") or ""
+            if park and park_counts.get(park, 0) >= MAX_PER_PARK:
+                deferred.append(item)
+            else:
+                diverse.append(item)
+                if park:
+                    park_counts[park] = park_counts.get(park, 0) + 1
+        remaining_pool = deferred + rest
+        slots_to_fill = TOP_N - len(diverse)
+        filled = 0
+        for item in remaining_pool:
+            if filled >= slots_to_fill:
+                break
+            park = item.get("osm_park_name", "") or ""
+            if not park or park_counts.get(park, 0) < MAX_PER_PARK:
+                diverse.append(item)
+                if park:
+                    park_counts[park] = park_counts.get(park, 0) + 1
+                filled += 1
+        placed_ids = {r["route_id"] for r in diverse}
+        results = diverse + [r for r in remaining_pool if r["route_id"] not in placed_ids]
+
     return results
 
