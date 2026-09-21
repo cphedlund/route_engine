@@ -1124,6 +1124,36 @@ def root():
 def health():
     return {"ok": True}
 
+import pdf_maps
+from fastapi.responses import Response
+from functools import lru_cache
+
+_RAW_BY_ID = {r["route_id"]: r for r in _RAW_GPX_ROUTES}
+
+
+@lru_cache(maxsize=8)
+def _route_pdf_bytes(route_id: str) -> bytes:
+    r = _RAW_BY_ID[route_id]
+    return pdf_maps.render_route_pdf(r["_path"], r["name"], r["distance_miles"], r["elevation_gain"])
+
+
+@app.get("/routes/{route_id}/map.pdf")
+def route_map_pdf(route_id: str, _: None = Depends(require_api_key)):
+    if route_id not in _RAW_BY_ID:
+        raise HTTPException(status_code=404, detail="Route not found")
+    try:
+        pdf = _route_pdf_bytes(route_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Map render failed: {e}")
+    safe_name = re.sub(r"[^A-Za-z0-9\- ]", "", _RAW_BY_ID[route_id]["name"]).strip() or "route"
+    return Response(
+        content=pdf,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{safe_name}.pdf"',
+            "Cache-Control": "public, max-age=86400",
+        },
+    )
 
 # -----------------------------
 # Core search helper (shared by /start_search and Make ingress)

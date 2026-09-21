@@ -11,3 +11,7 @@ itsdangerous>=2.1
 openai>=1.0
 shapely>=2.0
 rtree>=1.0
+
+pymupdf>=1.24
+numpy>=1.26
+requests>=2.31
