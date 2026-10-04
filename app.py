@@ -1337,7 +1337,8 @@ def health():
 
 import pdf_maps
 from fastapi.responses import Response
-from functools import lru_cache
+from collections import OrderedDict
+import threading
 
 _RAW_BY_ID = {r["route_id"]: r for r in _RAW_GPX_ROUTES}
 
@@ -1351,28 +1352,58 @@ for _r in _RAW_GPX_ROUTES:
     _ID_BY_NAME_KEY.setdefault(_name_key(_r["name"]), _r["route_id"])
 
 
-@lru_cache(maxsize=8)
-def _route_pdf_bytes(route_id: str) -> bytes:
+MAP_PDF_CACHE_MAX_BYTES = int(os.getenv("MAP_PDF_CACHE_MAX_BYTES", str(48 * 1024 * 1024)))
+_MAP_PDF_CACHE: "OrderedDict[str, tuple]" = OrderedDict()
+_MAP_PDF_CACHE_BYTES = 0
+_MAP_PDF_LOCK = threading.Lock()
+
+
+def _route_pdf(route_id: str):
+    global _MAP_PDF_CACHE_BYTES
+    with _MAP_PDF_LOCK:
+        hit = _MAP_PDF_CACHE.get(route_id)
+        if hit is not None:
+            _MAP_PDF_CACHE.move_to_end(route_id)
+            return hit
     r = _RAW_BY_ID[route_id]
-    return pdf_maps.render_route_pdf(r["_path"], r["name"], r["distance_miles"], r["elevation_gain"])
+    result = pdf_maps.render_route_map(r["_path"], r["name"], r["distance_miles"], r["elevation_gain"])
+    size = len(result[0])
+    if size <= MAP_PDF_CACHE_MAX_BYTES:
+        with _MAP_PDF_LOCK:
+            if route_id not in _MAP_PDF_CACHE:
+                _MAP_PDF_CACHE[route_id] = result
+                _MAP_PDF_CACHE_BYTES += size
+            while _MAP_PDF_CACHE_BYTES > MAP_PDF_CACHE_MAX_BYTES and _MAP_PDF_CACHE:
+                _, old = _MAP_PDF_CACHE.popitem(last=False)
+                _MAP_PDF_CACHE_BYTES -= len(old[0])
+    return result
+
+
+def _slug(s: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")
 
 
 @app.get("/routes/{route_id}/map.pdf")
 def route_map_pdf(route_id: str, _: None = Depends(require_api_key)):
-    rid = route_id if route_id in _RAW_BY_ID else _ID_BY_NAME_KEY.get(route_id.lower())
+    rid = route_id if route_id in _RAW_BY_ID else _ID_BY_NAME_KEY.get(_name_key(route_id))
     if not rid:
-        raise HTTPException(status_code=404, detail="Route not found")
+        return JSONResponse(status_code=404, content={"detail": "Route not found"})
     try:
-        pdf = _route_pdf_bytes(rid)
+        pdf, mode, park = _route_pdf(rid)
+    except pdf_maps.MapUnavailable as e:
+        return JSONResponse(status_code=503, content={"detail": str(e)}, headers={"Retry-After": "300"})
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Map render failed: {e}")
-    safe_name = re.sub(r"[^A-Za-z0-9\- ]", "", _RAW_BY_ID[rid]["name"]).strip() or "route"
+        print(f"[map.pdf] render failed for {rid}: {type(e).__name__}: {e}")
+        return JSONResponse(status_code=500, content={"detail": "Map render failed"})
+    route_slug = _slug(_RAW_BY_ID[rid]["name"])[:80].strip("-") or "route"
+    filename = f"{park}-{route_slug}.pdf" if park else f"{route_slug}.pdf"
     return Response(
         content=pdf,
         media_type="application/pdf",
         headers={
-            "Content-Disposition": f'attachment; filename="{safe_name}.pdf"',
-            "Cache-Control": "public, max-age=86400",
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "private, max-age=86400",
+            "X-Map-Mode": mode,
         },
     )
 

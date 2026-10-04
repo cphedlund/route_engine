@@ -12,6 +12,7 @@ CLI (for testing with a GPX):
   python atlas_scc.py --gpx R.gpx --geojson P.geo.json --map P.pdf --out O.pdf --title "Name"
 """
 import argparse, json, math
+from functools import lru_cache
 import numpy as np
 import fitz  # PyMuPDF
 
@@ -63,6 +64,12 @@ def detect_map_box_px(page, img_w, img_h):
     return top * (W / img_w and 1.0), right, W  # right in render px; W == img_w
 
 
+@lru_cache(maxsize=32)
+def _map_box_for_sheet(map_pdf_path, img_w, img_h):
+    with fitz.open(map_pdf_path) as d:
+        return detect_map_box_px(d[0], img_w, img_h)
+
+
 def render_scc_pdf(coords, name, distance_mi, gain_ft, geojson_path, map_pdf_path, out_path):
     geo = load_geo(geojson_path)
     fwd = geo["affine_pixel_to_lnglat"]
@@ -102,7 +109,7 @@ def render_scc_pdf(coords, name, distance_mi, gain_ft, geojson_path, map_pdf_pat
         shp.commit()
 
     # title card in the upper-right of the map area (not the legend panel)
-    top_px, right_px, render_w = detect_map_box_px(page, img_w, img_h)
+    top_px, right_px, render_w = _map_box_for_sheet(map_pdf_path, img_w, img_h)
     right_pt = right_px * (page.rect.width / render_w)
     top_pt = 0 * sy + page.rect.height * 0  # top of map ~ page top
     title = name

@@ -2,6 +2,9 @@ import os
 import tempfile
 from functools import lru_cache
 
+import fitz
+import requests
+
 import atlas_scc
 import atlas_mapbox
 
@@ -74,7 +77,37 @@ def pick_sheet(coords):
     return best
 
 
-def render_route_pdf(gpx_path, name, distance_mi, gain_ft):
+class MapUnavailable(Exception):
+    pass
+
+
+def _park_slug(pdf_path):
+    stem = os.path.splitext(os.path.basename(pdf_path))[0].lower()
+    stem = stem.replace("guide map", "").replace("guide-map", "")
+    return "-".join(t for t in "".join(ch if ch.isalnum() else " " for ch in stem).split())
+
+
+def _validate(data):
+    if not data or data[:4] != b"%PDF":
+        raise ValueError("Generated file is not a PDF")
+    with fitz.open(stream=data, filetype="pdf") as doc:
+        if doc.page_count < 1:
+            raise ValueError("Generated PDF has no pages")
+    return data
+
+
+def _render_mapbox(coords, name, distance_mi, gain_ft, out_path):
+    token = os.environ.get("MAPBOX_TOKEN", "").strip()
+    if not token:
+        raise MapUnavailable("Fallback map unavailable: MAPBOX_TOKEN is not configured")
+    try:
+        atlas_mapbox.render_mapbox_pdf(coords, name, distance_mi, gain_ft, token, out_path)
+    except requests.RequestException as e:
+        status = getattr(getattr(e, "response", None), "status_code", None)
+        raise MapUnavailable(f"Fallback map unavailable: Mapbox request failed ({status or type(e).__name__})") from None
+
+
+def render_route_map(gpx_path, name, distance_mi, gain_ft):
     coords, _ = atlas_scc.parse_gpx(gpx_path)
     if not coords:
         raise ValueError(f"No track points in {gpx_path}")
@@ -82,14 +115,20 @@ def render_route_pdf(gpx_path, name, distance_mi, gain_ft):
     with tempfile.TemporaryDirectory() as tmp:
         out_path = os.path.join(tmp, "route.pdf")
         if sheet:
-            atlas_scc.render_scc_pdf(
-                coords, name, distance_mi, gain_ft,
-                sheet["geo_path"], sheet["pdf_path"], out_path,
-            )
-        else:
-            atlas_mapbox.render_mapbox_pdf(
-                coords, name, distance_mi, gain_ft,
-                os.environ["MAPBOX_TOKEN"], out_path,
-            )
+            try:
+                atlas_scc.render_scc_pdf(
+                    coords, name, distance_mi, gain_ft,
+                    sheet["geo_path"], sheet["pdf_path"], out_path,
+                )
+                with open(out_path, "rb") as f:
+                    return _validate(f.read()), "overlay", _park_slug(sheet["pdf_path"])
+            except Exception:
+                if os.path.exists(out_path):
+                    os.remove(out_path)
+        _render_mapbox(coords, name, distance_mi, gain_ft, out_path)
         with open(out_path, "rb") as f:
-            return f.read()
+            return _validate(f.read()), "fallback", None
+
+
+def render_route_pdf(gpx_path, name, distance_mi, gain_ft):
+    return render_route_map(gpx_path, name, distance_mi, gain_ft)[0]

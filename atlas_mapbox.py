@@ -58,7 +58,7 @@ def static_url(coords, token, w=1200, h=900):
 
 def render_mapbox_pdf(coords, name, distance_mi, gain_ft, token, out_path):
     url = static_url(coords, token)
-    r = requests.get(url, timeout=30)
+    r = requests.get(url, timeout=(5, 15))
     r.raise_for_status()
     img_bytes = r.content
 
