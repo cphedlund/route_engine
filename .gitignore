@@ -6,3 +6,6 @@ __pycache__/
 .env
 
 venv/
+
+# Benchmark scratch output (latency varies per run)
+tests/benchmark/reports/last_pytest_run.json

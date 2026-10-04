@@ -1,0 +1,1096 @@
+# AtlasNav recommendation benchmark. Hard-constraint ground truth is computed from the routes data (app.ROUTE_DB), never from the engine.
+# expect.hard keys: distance_mi [lo,hi], elev_gain_ft_max (number, or FLAT = max(300 ft, 60 ft/mi x route distance)), elev_gain_ft_min, require_bike_legal, require_dog_allowed, require_wheelchair, park, route_type, within_mi_of_user.
+# must_include_any: list of route_ids, or 'auto' = every route in the data satisfying expect.hard.
+# must_exclude_where: python expression over route facts (distance_mi, elev_gain_ft, park, route_type...); a returned route matching it is a violation at any rank.
+# Violation rule: gates (bike, dog, wheelchair, park, route_type, proximity, must_exclude_where) are never excusable; distance/elevation targets are feasible-first (first F results, F = routes satisfying all hard constraints, must satisfy them).
+# expect.pages: evaluate N paginated pages (batch 3) with the feasible-first rule. infeasible: no route satisfies hard; engine must relax and explain.
+cases:
+- id: reg-empty-001
+  category: regression-false-empty
+  query: flat 5 mile hike
+  tags: &id001
+  - regression
+  - bug-false-empty
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.2358
+      lng: -121.9624
+      radius_km: 20
+    lat: 37.2358
+    lng: -121.9624
+  expect:
+    hard:
+      distance_mi: &id002
+      - 4.25
+      - 5.75
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: reg-empty-002
+  category: regression-false-empty
+  query: hike near me
+  tags: *id001
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.2358
+      lng: -121.9624
+      radius_km: 20
+    lat: 37.2358
+    lng: -121.9624
+  expect:
+    hard:
+      within_mi_of_user: 10
+    non_empty: true
+- id: reg-empty-003
+  category: regression-false-empty
+  query: dog friendly 3 mile hike
+  tags: *id001
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.3382
+      lng: -121.8863
+      radius_km: 20
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      require_dog_allowed: true
+    non_empty: true
+    must_include_any: auto
+- id: reg-empty-004
+  category: regression-false-empty
+  query: wheelchair accessible walk
+  tags: *id001
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.3382
+      lng: -121.8863
+      radius_km: 20
+  expect:
+    hard:
+      require_wheelchair: true
+    non_empty: true
+- id: reg-empty-005
+  category: regression-false-empty
+  query: 5 mile loop
+  tags: *id001
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.3382
+      lng: -121.8863
+      radius_km: 20
+  expect:
+    hard:
+      distance_mi: *id002
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: reg-empty-006
+  category: regression-false-empty
+  query: flat 3 mile walk
+  tags: *id001
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.3382
+      lng: -121.8863
+      radius_km: 50
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: loc-001
+  category: location
+  query: flat 5 mile hike
+  owner: atlas-route-engine
+  preferences:
+    lat: 37.2358
+    lng: -121.9624
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: reg-flat-001
+  category: regression-flat-elevation
+  query: flat 5 mile
+  tags: &id003
+  - regression
+  - bug-flat-elevation
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: &id004
+    - 8ce25ad67e6b7eb6
+    - 20ed0a4daf53cfec
+    - 924deed4258889a7
+    - 1254aad8cfdb7edc
+    - e4de579e6d1b5eaf
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-002
+  category: regression-flat-elevation
+  query: flat 5 mi loop
+  tags: *id003
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: *id004
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-003
+  category: regression-flat-elevation
+  query: easy flat 5 miles
+  tags: *id003
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: *id004
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-004
+  category: regression-flat-elevation
+  query: flat 5 mile trail run
+  tags: *id003
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-005
+  category: regression-flat-elevation
+  query: nice flat 5 mi walk with views
+  tags: *id003
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-006
+  category: regression-flat-elevation
+  query: 5 mile hike with no hills
+  tags: *id003
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-007
+  category: regression-flat-elevation
+  query: 5 mile hike with minimal elevation
+  tags: *id003
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-008
+  category: regression-flat-elevation
+  query: 5 mile hike under 300 ft gain
+  tags: *id003
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-009
+  category: regression-flat-elevation
+  query: flat 5 mile
+  tags:
+  - regression
+  - bug-flat-elevation
+  - pagination
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    pages: 2
+    non_empty: true
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-010
+  category: regression-flat-elevation
+  query: flat 3 mile walk
+  tags:
+  - regression
+  - bug-flat-elevation
+  - pagination
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      elev_gain_ft_max: FLAT
+    pages: 2
+    non_empty: true
+    must_exclude_where: elev_gain_ft > 600
+- id: reg-flat-011
+  category: regression-flat-elevation
+  query: flat 5 mile
+  tags:
+  - regression
+  - bug-flat-elevation
+  - structured-prefs
+  owner: atlas-route-engine
+  preferences:
+    intent: hike
+    distance_km:
+      min: 6.8
+      max: 9.4
+    elevation_gain_m:
+      max: 90
+  expect:
+    hard:
+      distance_mi:
+      - 4.25
+      - 5.75
+      elev_gain_ft_max: FLAT
+    must_exclude_where: elev_gain_ft > 600
+    non_empty: true
+    must_include_any: auto
+- id: flat-001
+  category: flat
+  query: flat 3 mile walk
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: flat-002
+  category: flat
+  query: flat 8 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 6.8
+      - 9.2
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: flat-003
+  category: flat
+  query: 8 km flat walk
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 4.2
+      - 5.75
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: flat-004
+  category: flat
+  query: 10k flat run
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 5.3
+      - 7.1
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: flat-005
+  category: flat
+  query: gentle 4 mile stroll
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi:
+      - 3.4
+      - 4.6
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+    must_exclude_where: elev_gain_ft > 600
+- id: dist-001
+  category: distance
+  query: 3 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+    non_empty: true
+    must_include_any: auto
+- id: dist-002
+  category: distance
+  query: 10 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 8.5
+      - 11.5
+    non_empty: true
+    must_include_any: auto
+- id: dist-003
+  category: distance
+  query: a 2 mile loop
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 1.4
+      - 2.6
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: dist-004
+  category: distance
+  query: half marathon trail
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 11.1
+      - 15.1
+    non_empty: true
+    must_include_any: auto
+- id: dist-005
+  category: distance
+  query: a flat five mile hike
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: dist-006
+  category: distance
+  query: short hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 0
+      - 3.0
+    non_empty: true
+- id: elev-001
+  category: elevation
+  query: steep 5 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      elev_gain_ft_min: 1000
+    non_empty: true
+    must_include_any: auto
+- id: elev-002
+  category: elevation
+  query: hilly 8 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 6.8
+      - 9.2
+      elev_gain_ft_min: 1200
+    non_empty: true
+    must_include_any: auto
+- id: elev-003
+  category: elevation
+  query: 3 mile hike with less than 500 ft of elevation gain
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      elev_gain_ft_max: 500
+    non_empty: true
+    must_include_any: auto
+- id: elev-004
+  category: elevation
+  query: 6 mile hike with at least 2000 ft of climbing
+  owner: atlas-nlq
+  expect:
+    hard:
+      distance_mi:
+      - 5.1
+      - 6.9
+      elev_gain_ft_min: 2000
+    non_empty: true
+    must_include_any: auto
+- id: dog-001
+  category: dog
+  query: 5 mile hike with my dog
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      require_dog_allowed: true
+    non_empty: true
+    must_include_any: auto
+- id: dog-002
+  category: dog
+  query: dogs allowed 8 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 6.8
+      - 9.2
+      require_dog_allowed: true
+    non_empty: true
+    must_include_any: auto
+- id: dog-003
+  category: dog
+  query: where dogs are allowed, 3 mile loop
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      require_dog_allowed: true
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: dog-004
+  category: dog
+  query: hike with my dog at Almaden Quicksilver
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Almaden Quicksilver County Park
+      require_dog_allowed: true
+    non_empty: true
+- id: dog-005
+  category: dog
+  query: dog friendly hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      require_dog_allowed: true
+    non_empty: true
+- id: bike-001
+  category: bike
+  query: bike ride 8 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 6.8
+      - 9.2
+      require_bike_legal: true
+    non_empty: true
+    must_include_any: auto
+- id: bike-002
+  category: bike
+  query: mountain biking 5 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      require_bike_legal: true
+    non_empty: true
+    must_include_any: auto
+- id: bike-003
+  category: bike
+  query: flat bike ride 5 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      require_bike_legal: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: bike-004
+  category: bike
+  query: road bike 12 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 10.2
+      - 13.8
+      require_bike_legal: true
+    non_empty: true
+    must_include_any: auto
+- id: bike-005
+  category: bike
+  query: gravel bike ride
+  owner: atlas-route-engine
+  expect:
+    hard:
+      require_bike_legal: true
+    non_empty: true
+- id: wheel-001
+  category: wheelchair
+  query: wheelchair accessible walk
+  owner: atlas-route-engine
+  expect:
+    hard:
+      require_wheelchair: true
+    non_empty: true
+- id: wheel-002
+  category: wheelchair
+  query: wheelchair accessible 3 mile
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      require_wheelchair: true
+    non_empty: true
+    must_include_any: auto
+- id: wheel-003
+  category: wheelchair
+  query: stroller friendly 2 mile loop
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 1.4
+      - 2.6
+      require_wheelchair: true
+    non_empty: true
+    must_include_any: auto
+- id: wheel-004
+  category: wheelchair
+  query: paved wheelchair accessible 5 mile flat
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      require_wheelchair: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: wheel-005
+  category: wheelchair
+  query: ADA accessible trail
+  owner: atlas-route-engine
+  expect:
+    hard:
+      require_wheelchair: true
+    non_empty: true
+- id: park-001
+  category: park-alias
+  query: hike at sanborn
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Sanborn County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-002
+  category: park-alias
+  query: hike at mt madonna
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Mount Madonna County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-003
+  category: park-alias
+  query: hike at Santa Teresa
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Santa Teresa County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-004
+  category: park-alias
+  query: hike at jdg
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Joseph D. Grant County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-005
+  category: park-alias
+  query: hike at ed levin
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Ed R. Levin County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-006
+  category: park-alias
+  query: hike at quicksilver
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Almaden Quicksilver County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-007
+  category: park-alias
+  query: hike at lgct
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Los Gatos Creek County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-008
+  category: park-alias
+  query: hike at calero
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Calero County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-009
+  category: park-alias
+  query: hike at harvey bear
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Coyote Lake - Harvey Bear Ranch County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-010
+  category: park-alias
+  query: hike at vasona
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Vasona Lake County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-011
+  category: park-alias
+  query: hike at uvas
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Uvas Canyon County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-012
+  category: park-alias
+  query: hike at baylands
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Sunnyvale Baylands Park
+    non_empty: true
+    must_include_any: auto
+- id: park-013
+  category: park-alias
+  query: hike at hellyer
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Hellyer County Park
+    non_empty: true
+    must_include_any: auto
+- id: park-014
+  category: park
+  query: 5 mile hike at Sanborn County Park
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Sanborn County Park
+      distance_mi:
+      - 3.5
+      - 6.5
+    non_empty: true
+    must_include_any: auto
+- id: park-015
+  category: park
+  query: flat walk at Vasona Lake County Park
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Vasona Lake County Park
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: park-016
+  category: park-alias
+  query: Mount Madonna hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Mount Madonna County Park
+    non_empty: true
+- id: park-017
+  category: park-alias
+  query: hike at Sierra Azul
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Sierra Azul Open Space Preserve
+    non_empty: true
+- id: park-018
+  category: park-alias
+  query: hike at Castle Rock State Park
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Castle Rock State Park
+    non_empty: true
+- id: park-019
+  category: park-alias
+  query: hike at Almaden Lake Park
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Almaden Lake Park
+    non_empty: true
+- id: prox-001
+  category: proximity
+  query: hike near me
+  owner: atlas-route-engine
+  preferences: &id005
+    lat: 37.2358
+    lng: -121.9624
+  expect:
+    hard:
+      within_mi_of_user: 10
+    non_empty: true
+- id: prox-002
+  category: proximity
+  query: nearby 3 mile hike
+  owner: atlas-route-engine
+  preferences: *id005
+  expect:
+    hard:
+      within_mi_of_user: 10
+      distance_mi:
+      - 2.25
+      - 3.75
+    non_empty: true
+    must_include_any: auto
+- id: prox-003
+  category: proximity
+  query: hike within 5 miles of me
+  owner: atlas-nlq
+  preferences: *id005
+  expect:
+    hard:
+      within_mi_of_user: 5
+    non_empty: true
+- id: prox-004
+  category: proximity
+  query: close flat walk
+  owner: atlas-route-engine
+  preferences: *id005
+  expect:
+    hard:
+      within_mi_of_user: 10
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: prox-005
+  category: proximity
+  query: hike near me
+  owner: atlas-route-engine
+  preferences:
+    lat: 34.4208
+    lng: -119.6982
+  expect:
+    hard:
+      within_mi_of_user: 10
+    infeasible: true
+- id: shape-001
+  category: shape
+  query: 5 mile loop
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi: *id002
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: shape-002
+  category: shape
+  query: out and back hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      route_type: out-and-back
+    non_empty: true
+    must_include_any: auto
+- id: shape-003
+  category: shape
+  query: loop trail 3 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: shape-004
+  category: shape
+  query: out and back 6 miles
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 5.1
+      - 6.9
+      route_type: out-and-back
+    non_empty: true
+    must_include_any: auto
+- id: comb-001
+  category: combined
+  query: easy 3 mile dog friendly loop at Santa Teresa
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Santa Teresa County Park
+      distance_mi:
+      - 2.5
+      - 3.8
+      require_dog_allowed: true
+      route_type: loop
+    non_empty: true
+    must_include_any: auto
+- id: comb-002
+  category: combined
+  query: flat 4 mile wheelchair accessible walk
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 3.4
+      - 4.6
+      require_wheelchair: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: comb-003
+  category: combined
+  query: flat 6 mile bike ride with my dog
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 5.1
+      - 6.9
+      require_bike_legal: true
+      require_dog_allowed: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: comb-004
+  category: combined
+  query: flat 3 mile loop with my dog
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 2.25
+      - 3.75
+      route_type: loop
+      require_dog_allowed: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any: auto
+- id: comb-005
+  category: combined
+  query: dog friendly flat walk near me
+  owner: atlas-route-engine
+  preferences: *id005
+  expect:
+    hard:
+      within_mi_of_user: 10
+      require_dog_allowed: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+- id: comb-006
+  category: combined
+  query: 5 mile bike ride at Calero
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Calero County Park
+      distance_mi: *id002
+      require_bike_legal: true
+    non_empty: true
+- id: inf-001
+  category: infeasible
+  query: bike ride at Almaden Quicksilver
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Almaden Quicksilver County Park
+      require_bike_legal: true
+    infeasible: true
+- id: inf-002
+  category: infeasible
+  query: wheelchair accessible walk at Uvas Canyon
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Uvas Canyon County Park
+      require_wheelchair: true
+    infeasible: true
+- id: inf-003
+  category: infeasible
+  query: flat 50 mile hike
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 42.5
+      - 57.5
+      elev_gain_ft_max: FLAT
+    infeasible: true
+- id: inf-004
+  category: infeasible
+  query: flat 10 mile hike at Sanborn
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Sanborn County Park
+      distance_mi:
+      - 8.5
+      - 11.5
+      elev_gain_ft_max: FLAT
+    infeasible: true
+- id: inf-005
+  category: infeasible
+  query: hike at Anderson Lake
+  owner: atlas-route-engine
+  expect:
+    hard:
+      park: Anderson Lake County Park
+    infeasible: true
+- id: inf-006
+  category: infeasible
+  query: 15 mile wheelchair accessible flat walk with dog
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 12.75
+      - 17.25
+      require_wheelchair: true
+      require_dog_allowed: true
+      elev_gain_ft_max: FLAT
+    infeasible: true
+- id: nonsense-001
+  category: nonsense
+  query: asdfgh
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-002
+  category: nonsense
+  query: ''
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-003
+  category: nonsense
+  query: '   '
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-004
+  category: nonsense
+  query: '!!!! ???'
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-005
+  category: nonsense
+  query: the quick brown fox
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-006
+  category: nonsense
+  query: '''; DROP TABLE routes; --'
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-007
+  category: nonsense
+  query: hike xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-008
+  category: nonsense
+  query: 🥾🌲⛰️
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-009
+  category: nonsense
+  query: 99999 miles
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-010
+  category: nonsense
+  query: -5 mile hike
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-011
+  category: nonsense
+  query: 0 mile hike
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
+- id: nonsense-012
+  category: nonsense
+  query: 'flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat
+    5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike
+    flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile
+    hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike flat 5 mile hike '
+  owner: atlas-nlq
+  expect:
+    no_crash_only: true
