@@ -962,17 +962,18 @@ cases:
       require_bike_legal: true
     non_empty: true
 - id: inf-001
-  category: infeasible
+  category: bike
   query: bike ride at Almaden Quicksilver
   owner: atlas-route-engine
-  xfail:
-    owner: atlas-route-engine
-    reason: "benchmark-truth change from Phase 2 data fix: osm_bicycle_legal was False for every Quicksilver route (any single bicycle=no sample); now 5 routes are bike-legal, so the case is feasible. Needs Carson's decision: drop infeasible flag or keep as-is"
+  notes: "Bike-legal under the 50 m bicycle=no run rule: 0166cd398d61fa49 (29.8 m), 18208676cabbf915 (39.4 m), 0f6852d87ed21e7a (49.3 m), c517397026ae2e23 (49.9 m). The last two sit within 1 m of the threshold, so must_include_any lists only the English Camp routes."
   expect:
     hard:
       park: Almaden Quicksilver County Park
       require_bike_legal: true
-    infeasible: true
+    non_empty: true
+    must_include_any:
+    - 0166cd398d61fa49
+    - 18208676cabbf915
 - id: inf-002
   category: infeasible
   query: wheelchair accessible walk at Uvas Canyon
@@ -1006,16 +1007,17 @@ cases:
       elev_gain_ft_max: FLAT
     infeasible: true
 - id: inf-005
-  category: infeasible
+  category: park
   query: hike at Anderson Lake
   owner: atlas-route-engine
-  xfail:
-    owner: atlas-route-engine
-    reason: "benchmark-truth change from Phase 2 data fix: footprint park assignment filled osm_park_name for Lakeview Trail and Rosendin Pond Loop (Anderson Lake County Park), so a hike there is now feasible. Needs Carson's decision"
+  notes: "Footprint park assignment puts Lakeview Trail (3d8d230d51624574) and Rosendin Pond Loop (423f74902dd28a48) in Anderson Lake County Park."
   expect:
     hard:
       park: Anderson Lake County Park
-    infeasible: true
+    non_empty: true
+    must_include_any:
+    - 3d8d230d51624574
+    - 423f74902dd28a48
 - id: inf-006
   category: wheelchair
   query: 15 mile wheelchair accessible flat walk with dog
