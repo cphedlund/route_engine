@@ -68,6 +68,25 @@ HARD_LIMITS = {
     "relaxed_max_proximity_mi": 500.0,
 }
 
+GATE_CONFIG = {
+    "wheelchair_paved_gpx_surface": "paved",
+    "wheelchair_paved_osm_surfaces": frozenset({"paved", "asphalt", "concrete", "paving_stones"}),
+}
+
+WHEELCHAIR_VERIFIED = "verified"
+WHEELCHAIR_UNVERIFIED = "unverified"
+WHEELCHAIR_NOT_ACCESSIBLE = "not accessible"
+
+
+def wheelchair_access(route: "Route") -> str:
+    gpx_paved = route.surface_type == GATE_CONFIG["wheelchair_paved_gpx_surface"]
+    osm_paved = route.osm_surface in GATE_CONFIG["wheelchair_paved_osm_surfaces"]
+    if gpx_paved and osm_paved:
+        return WHEELCHAIR_VERIFIED
+    if gpx_paved or osm_paved:
+        return WHEELCHAIR_UNVERIFIED
+    return WHEELCHAIR_NOT_ACCESSIBLE
+
 
 def flat_max_gain_ft(distance_miles: float) -> float:
     return max(HARD_LIMITS["flat_max_gain_ft"], HARD_LIMITS["flat_gain_ft_per_mile"] * float(distance_miles))
@@ -586,10 +605,6 @@ def select_routes(
     user_lng = prefs.get("lng", None)
     has_user_location = (user_lat is not None and user_lng is not None)
 
-    prox_overflow = 0.0
-    if relax_level >= 2:
-        prox_overflow = min(10.0, 2.0 * relax_level)
-
     # Hard gates
     candidates: List[Route] = []
     
@@ -598,7 +613,7 @@ def select_routes(
             live_prox = haversine_miles((user_lat, user_lng), r._start_point)
         else:
             live_prox = r.proximity_miles
-        if live_prox > (max_prox + prox_overflow):
+        if live_prox > max_prox:
             continue
 
         if isinstance(user_location, str) and user_location.strip():
@@ -644,13 +659,10 @@ def select_routes(
             and r.osm_park_dog_policy != "no"
         ]
 
-    # Wheelchair / accessibility gate: paved surfaces only
+    # Wheelchair / accessibility gate: GPX heuristic AND OSM must both say paved.
+    # Disagreement or missing OSM data is "unverified" and fails closed.
     if prefs.get("require_wheelchair_accessible"):
-        ACCESSIBLE_SURFACES = {"paved", "asphalt", "concrete", "paving_stones"}
-        candidates = [
-            r for r in candidates
-            if (r.osm_surface in ACCESSIBLE_SURFACES) or (r.surface_type == "paved")
-        ]
+        candidates = [r for r in candidates if wheelchair_access(r) == WHEELCHAIR_VERIFIED]
 
     if not candidates:
         return []
@@ -854,6 +866,7 @@ def select_routes(
             "sub_scores":      sub,
             "explanation_bits": explain_unique,
             "osm_park_name":   r.osm_park_name,
+            "wheelchair_access": wheelchair_access(r),
         })
 
     results.sort(key=lambda x: x["conformity_score"], reverse=True)
@@ -961,6 +974,25 @@ def select_routes_with_relaxation(
     names constraints that were actually relaxed.
     Returns (ranked_results, notice). notice is None when nothing was relaxed.
     """
+    ranked, notice, _ = select_routes_with_relaxation_steps(routes, preferences, weights=weights)
+    return ranked, notice
+
+
+def proximity_exhausted_notice(preferences: Dict[str, Any], relaxed_steps: List[str]) -> Optional[str]:
+    """Notice for when every route inside the user's distance limit has been shown."""
+    prefs = preferences or {}
+    if "proximity" in relaxed_steps or prefs.get("lat") is None or prefs.get("lng") is None:
+        return None
+    limit = float(prefs.get("max_proximity", 20.0))
+    return f"No more routes match within {limit:.1f} mi of your location."
+
+
+def select_routes_with_relaxation_steps(
+    routes: List[Route],
+    preferences: Dict[str, Any],
+    weights: Optional[Dict[str, float]] = None,
+) -> Tuple[List[Dict[str, Any]], Optional[str], List[str]]:
+    """Same as select_routes_with_relaxation, plus the list of relaxation steps applied."""
     base = dict(preferences or {})
 
     def run(steps: List[str]) -> Tuple[List[Dict[str, Any]], List[str]]:
@@ -993,4 +1025,5 @@ def select_routes_with_relaxation(
             f"Distance requests are capped at {float(base['target_miles']):g} mi, "
             f"so routes near {float(base['target_miles']):g} mi are shown instead of {float(requested):g} mi."
         )
-    return ranked, (" ".join(notes) if notes else None)
+    applied = steps if ranked else list(RELAXATION_ORDER)
+    return ranked, (" ".join(notes) if notes else None), applied
