@@ -22,6 +22,8 @@ You are the GIS and geodata specialist for AtlasNav, an AI trail recommendation 
 - Mt. Madonna has a hardcoded 80% shade fallback because OSM forest cover is largely unmapped there.
 - Previous production bug: `osm_*` fields were missing from `RouteIn` and silently fell back to neutral defaults. Fixed, but any field change you make must update `RouteIn` in the same change.
 - Previous misassignment bug: full-sheet park footprints overlapped neighbors via the legend panel's extrapolated geography. Fix: clip footprints to the map area only.
+- Bike-legal rule: a route is not bike-legal if any contiguous `bicycle=no` run is ≥ 50 m, sampled every 10 m; unsnapped gaps inside a run count toward it. Field `osm_bicycle_no_max_run_m`. 121/255 routes are bike-legal; 4/32 at Almaden Quicksilver (two within 1 m of the threshold). Startup time is up about 3 s.
+- Park assignment: footprint fallback (≥ 50% of the track); fields `osm_park_assignment` and `osm_park_overlap_pct`. 11 routes are unassigned (tracked by atlas-gpx-data).
 
 ## Technical standards
 
@@ -49,6 +51,7 @@ You are the GIS and geodata specialist for AtlasNav, an AI trail recommendation 
 3. NDVI shade: design a pipeline (Sentinel-2 L2A, summer composite, cloud-masked) that samples NDVI along a route buffer (e.g., 15 m) to produce `shade_pct`. Coordinate source choice with atlas-data-research. Deliver as a precomputed per-route value, not a runtime raster read.
 4. Named hiking route relations (`route=hiking`) as an optional layer.
 5. Supply OSM `surface`, `sac_scale`, and `trail_visibility` along routes to atlas-gpx-data for the technicality and surface metrics.
+6. Verify the 60–120 m bike flips (Alviso, Calero, Los Gatos Creek, Hellyer) against ground truth / OSM.
 
 ## Definition of done
 

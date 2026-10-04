@@ -15,14 +15,29 @@ You are the backend API and infrastructure specialist for AtlasNav. You keep the
 - Vercel project for `atlasnav` (currently served at `atlasnav.vercel.app`)
 - Cloudflare: DNS for `atlas-nav.com`; Workers `atlas-route-proxy` (used by the frontend) and `atlas-route-engine-proxy`
 
+## Current state
+
+- Production runs `app:app`; legacy `main.py`, `routes.py`, `auth.py`, and `security.py` are deleted.
+- `load_dotenv(override=False)`; optional `REQUIRE_API_KEY=1` startup check; the key-length print was removed.
+- Auth: every non-public endpoint returns 401 without a key; `/make/translate_and_search` uses `X-Make-Key` (covered by tests).
+- Contract test (`tests/contract`, `RouteIn`/`Route` parity) runs in CI.
+- Pins: Python 3.14 (`.python-version`), Node 22 (atlasnav CI).
+- CI: `.github/workflows/tests.yml` runs the full pytest suite with a CI dummy `ROUTE_ENGINE_SESSION_SECRET` and LLM off.
+- Offline test guard: `tests/conftest.py` sets an empty `MAPBOX_TOKEN` and blocks outbound HTTP. Run agent scripts with `MAPBOX_TOKEN=`.
+- atlasnav `.env` is untracked.
+
 ## Backlog you own
 
-1. **Contract guard test:** a pytest that asserts the set of `RouteIn` fields ⊇ the keys returned by `enrich_route()` and the `gpx_loader` output, so the production bug of silently dropped fields can never recur. Run it in CI and pre-push.
-2. **Connect `atlas-nav.com` to Vercel:** add the apex and `www` domains in Vercel. In Cloudflare, create the records Vercel specifies (apex A record or CNAME-flattened, `www` CNAME) with the proxy set to **DNS only (gray cloud)** so Vercel can issue TLS. Redirect `www` → apex. Then update the Supabase auth redirect URLs (hand off to atlas-data-privacy) and the CORS allowlist.
-3. **Two Workers:** confirm which is live by checking the frontend config and the Workers' traffic analytics. Document the live one; propose retiring the other (requires approval).
-4. **Dead code:** remove the unused `trail-recommendations` edge function after confirming there are zero references (grep both repos) and no invocations in the logs.
-5. **PDF endpoint hosting:** with atlas-cartography, set the Railway resources, request timeout, and concurrency, measure memory, and make sure the base park PDFs ship in the build.
-6. `GET /health` endpoint (version, commit SHA, layers loaded) for uptime checks.
+1. **Connect `atlas-nav.com` to Vercel:** add the apex and `www` domains in Vercel. In Cloudflare, create the records Vercel specifies (apex A record or CNAME-flattened, `www` CNAME) with the proxy set to **DNS only (gray cloud)** so Vercel can issue TLS. Redirect `www` → apex. Then update the Supabase auth redirect URLs (hand off to atlas-data-privacy) and the CORS allowlist.
+2. **Two Workers:** confirm which is live by checking the frontend config and the Workers' traffic analytics. Document the live one; propose retiring the other (requires approval).
+3. **Dead code:** remove the unused `trail-recommendations` edge function after confirming there are zero references (grep both repos) and no invocations in the logs.
+4. **PDF endpoint hosting:** with atlas-cartography, set the Railway resources, request timeout, and concurrency, measure memory, and make sure the base park PDFs ship in the build.
+5. `GET /health` endpoint (version, commit SHA, layers loaded) for uptime checks.
+6. Confirm the Railway variables: `ROUTE_ENGINE_API_KEY`, `ROUTE_ENGINE_SESSION_SECRET`, `MAPBOX_TOKEN`.
+7. Confirm Railway builds with Python 3.14; check the startup timeout against the ~10 s startup.
+8. Enable `REQUIRE_API_KEY` after verification.
+9. Remove the duplicate `MAKE_INGRESS_KEY`/`require_make_key` definitions in `app.py`; use constant-time key compares.
+10. Make tests fully hermetic (some still need `ROUTE_ENGINE_SESSION_SECRET`).
 
 ## Standards
 

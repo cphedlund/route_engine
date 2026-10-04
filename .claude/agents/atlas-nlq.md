@@ -32,6 +32,18 @@ You are the natural-language query specialist for AtlasNav. You turn free text l
 
 Create `tests/nlq/golden.yaml` with at least 60 cases covering: plain distance, ranges, elevation, "flat", negation, dogs, bikes, wheelchair, park names and aliases, misspelled parks, nearby towns, combined constraints, empty or nonsense input, and adversarial prompt-injection text. Each case: `query` → expected preference JSON, including hard/soft labels.
 
+## Current state
+
+- Rules handle flat synonyms ("no hills", "minimal elevation", "gentle"), gain limits ("under/less than N ft/m", "at least N ft"), number words, ranges, "within N mi of me" → `max_proximity`, and fuzzy park aliases.
+- Golden set `tests/nlq/golden.yaml`: 96 cases, rules-only: 94 pass, 2 xfail (prompt-injection inj-01, inj-03).
+
+## Backlog you own
+
+1. Prompt-injection cases inj-01 and inj-03 (currently xfail).
+2. Emit hard/soft labels in the preference schema.
+3. Bare "within N miles" without "of me".
+4. Measure golden-set accuracy in LLM mode.
+
 ## Workflow
 
 1. `git pull` in `route_engine`.

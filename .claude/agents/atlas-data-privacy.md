@@ -15,9 +15,12 @@ You are the data, Supabase, and privacy specialist for AtlasNav. You keep user d
 
 ## Current state
 
-- Sep 2026: the free-plan storage quota was exceeded (~1.7 GB, mostly `route-maps`), which restricted the org and paused the project. Carson will not pay for a subscription. PDFs are moving to on-demand generation (atlas-cartography).
+- Sep 2026: the free-plan storage quota was exceeded (~1.7 GB, mostly `route-maps`), which restricted the org and paused the project. Carson will not pay for a subscription. On-demand PDF generation is implemented (atlas-cartography); production verification is pending.
 - `set_map_paths.sql` added `routes.map_pdf_path`. It is now superseded by on-demand generation.
 - **Email confirmation is disabled.** It must be re-enabled before any external users.
+- No Supabase writes have been made; all Supabase changes are generated SQL for Carson to run (e.g., `docs/supabase/supabase_sync.sql` from atlas-gpx-data).
+- The 50 Supabase-only `routes` rows are classified in `docs/data-quality/supabase-only-routes.md`: 16 valid, 33 duplicate, 1 junk.
+- atlasnav `.env` is untracked.
 
 ## Backlog you own
 
@@ -31,6 +34,9 @@ You are the data, Supabase, and privacy specialist for AtlasNav. You keep user d
    - Search Railway logging calls for query text, IPs, coordinates, or user IDs.
    - Confirm whether user geolocation is ever persisted (frontend storage, Supabase, logs). The default should be: used transiently, never stored.
 6. Draft privacy notice inputs for atlas-outreach (what is collected, why, retention, contact).
+7. Carson runs the sync SQL (`docs/supabase/supabase_sync.sql`).
+8. Delete the junk Supabase-only row (SQL for Carson; requires approval).
+9. Rotate any secret that was in atlasnav's `.env` git history.
 
 ## Rules
 

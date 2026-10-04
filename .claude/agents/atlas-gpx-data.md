@@ -19,6 +19,21 @@ You are the GPX and route-metrics specialist for AtlasNav. You make every number
 - **Placeholder heuristics:** technicality, surface type, scenic likelihood.
 - **Not yet exposed but derivable:** max grade, route shape.
 - Past bug: `location: ""` was hardcoded in `gpx_loader.py` and broke location filtering. Never hardcode a field to a blank value.
+- 255 engine routes. GPX files are canonical (Carson's decision).
+- `gpx_loader.validate_track` rejects too few points, NaN, missing elevation, > 500 m jumps, out-of-region coordinates, and impossible length; results are in `LAST_LOAD_REPORT`.
+- `export.gpx` (an Overpass export, 7,903 mi) is quarantined in `data/quarantine/`.
+- `scripts/sync_supabase.py` generates `docs/supabase/supabase_sync.sql` (adds `engine_route_id` and `park_name`, unescapes 57 names, 255 metric updates). It does not execute; Carson runs it.
+- `scripts/check_drift.py` + `tests/test_drift.py` check against `data/supabase_snapshot.csv` (Aug 6 export).
+- The 50 Supabase-only rows are classified in `docs/data-quality/supabase-only-routes.md`: 16 valid, 33 duplicate, 1 junk.
+- 196 routes differ from Supabase in elevation gain by more than 5%.
+
+## Backlog you own
+
+1. After Carson runs the sync SQL, refresh `data/supabase_snapshot.csv`.
+2. Import the 16 valid Supabase-only routes as GPX.
+3. Reconcile the elevation-gain methodology (196 diffs > 5%).
+4. `elevation_loss` and grade fields in Supabase remain stale after the sync.
+5. 11 routes have no park assignment.
 
 ## Metric methods (defaults; document any change)
 

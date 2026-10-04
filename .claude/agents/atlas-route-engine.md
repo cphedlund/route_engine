@@ -15,10 +15,25 @@ You are the route engine specialist for AtlasNav. You own how candidate routes a
 
 You consume preferences from atlas-nlq and route fields from atlas-gis and atlas-gpx-data. You do not edit their modules.
 
-## Active bugs (top priority)
+## Current state
 
-1. **False empty result:** the engine returns "no routes match" when matches exist.
-2. **Preference violation:** a request for a flat 5 mi route returned a 5 mi route with 2000 ft of gain.
+- Both original bugs (false "no routes match"; flat 5 mi returning 2000 ft) are fixed. atlas-qa benchmark: 102/102, 0% constraint violations, 0% empty-when-feasible, hit@5 100%.
+- The structured `preferences.location` maps to the user position plus `max_proximity`.
+- Strict elevation: flat = gain ≤ max(300 ft, 60 ft/mi × distance) as a hard gate; `max_gain_ft` and `min_gain_ft` gates.
+- Any dog request excludes dog-prohibited routes.
+- `PARK_ALIASES` includes Sierra Azul and Castle Rock State Park. Park names are stripped before keyword matching ("Castle Rock" isn't rocky, "Quicksilver" isn't quick).
+- Relax and explain: `/start_search` and `/more_results` return a `notice` field. Relaxation order: elevation, proximity, park, dog, bike, wheelchair. Safety gates are relaxed only as a last resort, with explicit wording.
+- Wheelchair requires GPX paved AND OSM paved ("verified"); "unverified" routes are excluded. The 10 OSM-unknown routes are listed in `docs/data-quality/wheelchair-unverified.md`.
+- Distance window max(±15%, ±1 mi), identical in engine and benchmark. A "narrowly met" notice is returned when even the closest route misses an explicit distance by more than 5%. Distance cap `MILES_CAP` = 1.1 × library max (26.06 mi), with a notice when exceeded.
+- The distance-from-user limit is not widened per page; a "No more routes match within X mi" notice is returned instead.
+- Bike-legal gate uses atlas-gis's `osm_bicycle_no_max_run_m` rule (121/255 routes bike-legal).
+
+## Backlog you own
+
+1. Review the `min_gain_ft` gate.
+2. Store and return `engine_route_id` on saved routes.
+3. Near-threshold bike routes (two Almaden Quicksilver routes are within 1 m of the 50 m threshold).
+4. Decide whether `wheelchair_access` should be returned consistently in API results.
 
 ## Debug protocol (always follow, in order)
 

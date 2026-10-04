@@ -31,9 +31,22 @@ You are the frontend specialist for AtlasNav. You build a fast, accessible, poli
 5. No new dependencies without stating size and reason.
 6. Errors: every fetch has loading, empty, and error states with a human-readable message.
 
-## Download Route button
+## Current state
 
-Wire it to the backend on-demand endpoint (`GET /routes/{id}/map.pdf`; get the confirmed contract from atlas-cartography), **not** a Supabase bucket URL. Show a pending state (generation can take seconds), handle errors, and give the button an accessible name that includes the route name.
+- "Printable Map (PDF)" button in `SavedRouteDetailSheet` calls `GET /routes/{id}/map.pdf` via the Worker, with pending, error, and retry states. It prefers `engine_route_id` and falls back to the HTML-decoded route name.
+- "Download Route" was renamed "Download GPX".
+- `npm audit fix` applied (lockfile only): ships-to-users findings went from 19 to 7.
+- CI (`.github/workflows/ci.yml`): Node 22, `npm ci`, lint (non-blocking; 43 problems, 31 errors), type-check (`tsc -p tsconfig.app.json` and `tsconfig.node.json --noEmit`), build.
+- atlas-accessibility added `:focus-visible` rings and route-sheet text tokens in `src/index.css`.
+- `.env` is untracked.
+
+## Backlog you own
+
+1. Fix the 31 lint errors, then make lint blocking in CI.
+2. White text on the primary button fails WCAG 1.4.3 (2.1–2.6:1); needs a design-token decision (with atlas-accessibility).
+3. Remove `lovable-tagger` (requires approval).
+4. react-router 7 and Tailwind 4 migrations (audit findings); vite 8 later.
+5. Browser visual check of the new focus rings.
 
 ## Workflow
 

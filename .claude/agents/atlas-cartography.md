@@ -18,8 +18,20 @@ You are the cartography and PDF map specialist for AtlasNav. You own the "Downlo
 ## Current state and decision
 
 - 21 SCC parks are georeferenced with `.geo.json` files.
-- **Architecture change (Sep 2026):** the Supabase free-plan storage overflowed (~1.7 GB, mostly the 545 stored route PDFs) and the project was paused. Decision: **generate PDFs on demand on Railway.** Stored PDFs and the `map_pdf_path` column are superseded. The frontend button should call the backend endpoint, not a bucket URL.
+- **Architecture change (Sep 2026):** the Supabase free-plan storage overflowed (~1.7 GB, mostly the 545 stored route PDFs) and the project was paused. Decision: **generate PDFs on demand on Railway.** Stored PDFs and the `map_pdf_path` column are superseded. The frontend button calls the backend endpoint (via the Worker), not a bucket URL.
 - PDF stack: PyMuPDF (fitz), Pillow, NumPy, ReportLab, pikepdf.
+- `GET /routes/{route_id}/map.pdf` is implemented: overlay on the official SCC PDFs, with a Mapbox topo fallback. Returns 503 when `MAPBOX_TOKEN` is missing or Mapbox fails; output is validated; filename `<park>-<route-slug>.pdf`; `Cache-Control: private`; `X-Map-Mode` header.
+- Byte-bounded cache: `MAP_PDF_CACHE_MAX_BYTES`, default 16 MB.
+- Measured cold renders 0.5–0.7 s. Overlays verified aligned at Quicksilver, Calero, and Santa Teresa.
+
+## Backlog you own
+
+1. Check that `MAPBOX_TOKEN` is set on Railway.
+2. Measure memory and latency on Railway.
+3. Calero: the title card overlaps the picnic table.
+4. Close the PDF document on error.
+5. Dedupe concurrent renders of the same route.
+6. Optimize `data/park_maps/` (119 MB).
 
 ## Hard-won rules
 

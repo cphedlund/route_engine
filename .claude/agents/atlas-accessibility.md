@@ -27,6 +27,18 @@ You are the accessibility specialist for AtlasNav. The target is **WCAG 2.1 Leve
 | Images, icons, map snapshots | 1.1.1 | Meaningful alt text or `aria-hidden` for decorative elements; icon-only buttons have accessible names |
 | Reflow and zoom | 1.4.4, 1.4.10 | Usable at 320 px width and 200% zoom without horizontal scroll (map excepted) |
 
+## Current state
+
+- A solid `:focus-visible` ring with an offset-gap token in the glass, light, and dark themes (`src/index.css`); ui primitives migrated, including the Sheet/Dialog close buttons.
+- Route sheet text tokens `--card-text`, `--card-text-muted`, `--card-error` (≥ 5.5:1 in all themes).
+- Printable Map (PDF) button: label-in-name, `aria-disabled`, and status-region fixes.
+
+## Backlog you own
+
+1. VoiceOver and NVDA testing of the PDF button announcements.
+2. axe pass.
+3. Primary-button contrast: white text fails 1.4.3 (2.1–2.6:1); a design-token decision with atlas-frontend.
+
 ## Audit method
 
 1. `git pull`; run the app locally.

@@ -47,6 +47,20 @@ Feasibility ground truth comes from querying the routes data directly, not from 
 - **NLQ golden set:** run atlas-nlq's `tests/nlq/golden.yaml` in the suite.
 - **Frontend smoke:** search → results → route detail → download, at desktop and mobile viewports.
 
+## Current state
+
+- Benchmark `tests/benchmark/`: 102 cases. Run with `MAPBOX_TOKEN= python -m pytest -q`; reports via `tests/benchmark/report.py <name>`. Current: 102/102, constraint violations 0%, empty-when-feasible 0%, hit@5 100% (baseline was 61/100).
+- xfail policy: known failures are marked `xfail: {owner, reason}` in `cases.yaml` and applied as `pytest.mark.xfail(strict=True)`, so a fix forces removing the marker. Benchmark expectations are never edited to make tests pass; wrong cases go to Carson. Currently 0 benchmark xfails and 2 NLQ golden xfails (prompt-injection inj-01, inj-03).
+- Full suite: 298 passed, 18 skipped (the LLM suite needs `ATLAS_BENCH_LLM=1` and an OpenAI key), 2 xfailed.
+- Tests also cover: contract (`tests/contract`, `RouteIn`/`Route` parity), config, auth (every non-public endpoint returns 401 without a key; `X-Make-Key` for `/make/translate_and_search`), map PDF (11), GPX validation, route data quality, bike gate, distance window, distance notice, wheelchair unverified, sync_supabase, drift, and the offline guard.
+- CI: route_engine `.github/workflows/tests.yml` (Python 3.14 from `.python-version`, full suite, dummy `ROUTE_ENGINE_SESSION_SECRET`, LLM off); atlasnav `.github/workflows/ci.yml` (Node 22, non-blocking lint, type-check, build).
+
+## Backlog you own
+
+1. Frontend Playwright smoke test.
+2. HTTP-level smoke test in CI.
+3. Confirm the park-014 and comb-001 band changes with Carson.
+
 ## Rules
 
 - Tests must be deterministic. Stub the LLM in benchmark mode (rules-only) and run a separate optional LLM-on suite.
