@@ -7,6 +7,7 @@ import json
 import hmac
 import hashlib
 import base64
+import difflib
 import re
 from typing import Dict, List, Optional, Any, Set, Tuple
 from dotenv import load_dotenv
@@ -340,6 +341,107 @@ def _extract_first_number(text: str) -> Optional[float]:
         return None
 
 
+_NUM_WORDS: Dict[str, int] = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+    "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12, "thirteen": 13,
+    "fourteen": 14, "fifteen": 15, "sixteen": 16, "seventeen": 17, "eighteen": 18,
+    "nineteen": 19, "twenty": 20, "thirty": 30, "forty": 40, "fifty": 50,
+}
+_NUM_WORD_RE = "|".join(sorted(_NUM_WORDS, key=len, reverse=True))
+_DIST_UNIT = r"(?:miles?|mi|km|kilometers?|kilometres?|k)"
+
+
+def _number_words_to_digits(q: str) -> str:
+    def tens_units(m):
+        return str(_NUM_WORDS[m.group(1)] + _NUM_WORDS[m.group(2)])
+
+    q = re.sub(r"\b(twenty|thirty|forty)[ -](one|two|three|four|five|six|seven|eight|nine)\b", tens_units, q)
+    q = re.sub(r"\b(" + _NUM_WORD_RE + r")(?=\s+(?:and|to)\s+(?:" + _NUM_WORD_RE + r"|\d)[a-z0-9. -]*?\s*(?:miles?|mi|km|kilometers?|kilometres?)\b)",
+               lambda m: str(_NUM_WORDS[m.group(1)]), q)
+    q = re.sub(r"\b(" + _NUM_WORD_RE + r") and a half\b", lambda m: str(_NUM_WORDS[m.group(1)] + 0.5), q)
+    q = re.sub(r"\b(?:a )?half[ -](?:a[ -])?(?=(?:mile|mi|km|kilometer|kilometre)s?\b)", "0.5 ", q)
+    q = re.sub(r"\b(?:a )?quarter[ -](?:of a[ -])?(?=(?:mile|mi|km|kilometer|kilometre)s?\b)", "0.25 ", q)
+    q = re.sub(r"\b(" + _NUM_WORD_RE + r")(?=[ -](?:miles?|mi|km|kilometers?|kilometres?|k|ft|feet|foot|meters?|metres?|m)\b)",
+               lambda m: str(_NUM_WORDS[m.group(1)]), q)
+    q = re.sub(r"\b(" + _NUM_WORD_RE + r")(?=\s+(?:hundred|thousand)\b)", lambda m: str(_NUM_WORDS[m.group(1)]), q)
+    q = re.sub(r"(\d+(?:\.\d+)?)\s+hundred\b", lambda m: str(float(m.group(1)) * 100), q)
+    q = re.sub(r"(\d+(?:\.\d+)?)\s+thousand\b", lambda m: str(float(m.group(1)) * 1000), q)
+    return q
+
+
+_NUM = r"(\d+(?:,\d{3})*(?:\.\d+)?)"
+_ELEV_UNIT = r"(ft|feet|foot|'|m|meters?|metres?)"
+_ELEV_WORD = r"(?:of\s+)?(?:elevation(?:\s+gain)?|gain|climb(?:ing)?|ascent|vert(?:ical)?)"
+
+
+def _to_float(s: str) -> float:
+    return float(s.replace(",", ""))
+
+
+def _to_ft(val: float, unit: str) -> float:
+    return val if unit in {"ft", "feet", "foot", "'"} else val * 3.28084
+
+
+def _extract_elevation_limits(q: str) -> Tuple[Optional[float], Optional[float], str]:
+    max_ft: Optional[float] = None
+    min_ft: Optional[float] = None
+
+    def need_word(unit: str) -> bool:
+        return unit not in {"ft", "feet", "foot", "'"}
+
+    pat_max = re.compile(
+        r"(?:under|less than|below|fewer than|max(?:imum)?(?: of)?|no more than|at most|up to|not more than|capped at)\s*"
+        + _NUM + r"\s*" + _ELEV_UNIT + r"(?:\s+" + _ELEV_WORD + r")?(?![a-z])"
+    )
+    pat_min = re.compile(
+        r"(?:at least|more than|over|above|min(?:imum)?(?: of)?|no less than|not less than|greater than)\s*"
+        + _NUM + r"\s*" + _ELEV_UNIT + r"(?:\s+" + _ELEV_WORD + r")?(?![a-z])"
+    )
+    for pat, kind in ((pat_max, "max"), (pat_min, "min")):
+        def repl(m, kind=kind):
+            nonlocal max_ft, min_ft
+            unit = m.group(2)
+            has_word = bool(re.search(r"elevation|gain|climb|ascent|vert", m.group(0)))
+            if need_word(unit) and not has_word:
+                return m.group(0)
+            ft = round(_to_ft(_to_float(m.group(1)), unit), 0)
+            if kind == "max":
+                max_ft = ft
+            else:
+                min_ft = ft
+            return " "
+        q = pat.sub(repl, q)
+    m = re.search(r"\b" + _NUM + r"\s*" + _ELEV_UNIT + r"\s+(?:of\s+)?(?:elevation(?:\s+gain)?|gain|climb(?:ing)?)\s+(?:or less|max(?:imum)?)\b", q)
+    if m and max_ft is None:
+        max_ft = round(_to_ft(_to_float(m.group(1)), m.group(2)), 0)
+        q = q.replace(m.group(0), " ")
+    m = re.search(r"\b" + _NUM + r"\s*" + _ELEV_UNIT + r"\s+(?:of\s+)?(?:elevation(?:\s+gain)?|gain|climb(?:ing)?)\s+(?:or more|min(?:imum)?|plus)\b", q)
+    if m and min_ft is None:
+        min_ft = round(_to_ft(_to_float(m.group(1)), m.group(2)), 0)
+        q = q.replace(m.group(0), " ")
+    return max_ft, min_ft, q
+
+
+_PROX_ANCHOR = r"(?:me|here|us|home|my (?:location|house|place|home)|where i am|my area|the city)"
+
+
+def _extract_proximity(q: str) -> Tuple[Optional[float], str]:
+    pat = re.compile(
+        r"(?:within|inside|under|less than|up to|no more than|at most|max(?:imum)?)?\s*" + _NUM + r"\s*" + _DIST_UNIT
+        + r"(?:\s+(?:away|drive))?\s+(?:of|from)\s+" + _PROX_ANCHOR + r"\b"
+    )
+    m = pat.search(q)
+    pat2 = re.compile(r"\b" + _NUM + r"\s*" + _DIST_UNIT + r"\s+away\b")
+    if not m:
+        m = pat2.search(q)
+    if not m:
+        return None, q
+    val = _to_float(m.group(1))
+    if re.search(r"\b(?:km|kilometers?|kilometres?|k)\b", m.group(0)):
+        val *= 0.621371
+    return round(val, 2), q.replace(m.group(0), " ", 1)
+
+
 def _contains_any(text: str, words: List[str]) -> bool:
     t = _norm_text(text)
     return any(w in t for w in words)
@@ -419,7 +521,24 @@ def _extract_park_alias(query: str) -> Optional[str]:
         pattern = r"(?:^|[^a-z])" + re.escape(alias) + r"(?:[^a-z]|$)"
         if re.search(pattern, q):
             return alias
-    return None
+    return _fuzzy_park_alias(q)
+
+
+def _fuzzy_park_alias(q: str) -> Optional[str]:
+    words = re.findall(r"[a-z]+", q)
+    best: Optional[Tuple[float, str]] = None
+    for alias in PARK_ALIASES:
+        if len(alias) < 7 or "." in alias:
+            continue
+        n = len(alias.split())
+        for i in range(0, len(words) - n + 1):
+            gram = " ".join(words[i:i + n])
+            if gram[:1] != alias[:1] or abs(len(gram) - len(alias)) > 2:
+                continue
+            ratio = difflib.SequenceMatcher(None, gram, alias).ratio()
+            if ratio >= 0.86 and (best is None or ratio > best[0]):
+                best = (ratio, alias)
+    return best[1] if best else None
 
 
 def _extract_park_filter(query: str) -> Optional[str]:
@@ -439,26 +558,72 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
     # Park names are not preference keywords ("Castle Rock" is not rocky, "Quicksilver" is not quick)
     park_alias = _extract_park_alias(query)
     if park_alias:
-        q = re.sub(r"(?:^|(?<=[^a-z]))" + re.escape(park_alias) + r"(?=[^a-z]|$)", " ", q)
+        q_exact = re.sub(r"(?:^|(?<=[^a-z]))" + re.escape(park_alias) + r"(?=[^a-z]|$)", " ", q)
+        if q_exact == q:
+            n = len(park_alias.split())
+            ws = q.split()
+            for i in range(0, len(ws) - n + 1):
+                gram = " ".join(re.sub(r"[^a-z]", "", w) for w in ws[i:i + n])
+                if difflib.SequenceMatcher(None, gram, park_alias).ratio() >= 0.86:
+                    ws[i:i + n] = [" "] * n
+                    break
+            q_exact = " ".join(ws)
+        q = q_exact
 
-    # Distance: explicit numbers win
+    q = _number_words_to_digits(q)
+
+    max_gain_ft, min_gain_ft, q = _extract_elevation_limits(q)
+    if max_gain_ft is not None and prefs.get("max_gain_ft") is None:
+        prefs["max_gain_ft"] = max_gain_ft
+    if min_gain_ft is not None and prefs.get("min_gain_ft") is None:
+        prefs["min_gain_ft"] = min_gain_ft
+
+    prox_mi, q = _extract_proximity(q)
+    if prox_mi is not None and prefs.get("max_proximity") is None:
+        prefs["max_proximity"] = prox_mi
+
     miles_from_text: Optional[float] = None
-    if "10k" in q or "10 k" in q:
-        miles_from_text = 6.2137
-    elif "5k" in q or "5 k" in q:
-        miles_from_text = 3.1069
+    range_m = re.search(
+        r"(?:between\s+)?" + _NUM + r"\s*(?:" + _DIST_UNIT + r")?\s*(?:and|to|-)\s*" + _NUM + r"\s*(" + _DIST_UNIT + r")\b", q
+    )
+    if range_m and ("between" in range_m.group(0) or "-" in range_m.group(0) or " to " in range_m.group(0)):
+        lo, hi = _to_float(range_m.group(1)), _to_float(range_m.group(2))
+        if re.fullmatch(r"km|kilometers?|kilometres?|k", range_m.group(3)):
+            lo, hi = lo * 0.621371, hi * 0.621371
+        if lo > hi:
+            lo, hi = hi, lo
+        if prefs.get("min_mileage") is None and prefs.get("max_mileage") is None and prefs.get("target_miles") is None:
+            prefs["min_mileage"] = round(lo, 2)
+            prefs["max_mileage"] = round(hi, 2)
+        q = q.replace(range_m.group(0), " ", 1)
+    elif re.search(r"\b(?:under|less than|below|at most|no more than|max(?:imum)?(?: of)?|up to|shorter than)\s*" + _NUM + r"\s*(" + _DIST_UNIT + r")(?![a-z])", q):
+        bm = re.search(r"\b(?:under|less than|below|at most|no more than|max(?:imum)?(?: of)?|up to|shorter than)\s*" + _NUM + r"\s*(" + _DIST_UNIT + r")(?![a-z])", q)
+        hi = _to_float(bm.group(1)) * (0.621371 if re.fullmatch(r"km|kilometers?|kilometres?|k", bm.group(2)) else 1.0)
+        if prefs.get("min_mileage") is None and prefs.get("max_mileage") is None and prefs.get("target_miles") is None:
+            prefs["min_mileage"] = 0.0
+            prefs["max_mileage"] = round(hi, 2)
+        q = q.replace(bm.group(0), " ", 1)
+    elif re.search(r"\b(?:at least|more than|over|no less than|minimum(?: of)?|min|longer than)\s*" + _NUM + r"\s*(" + _DIST_UNIT + r")(?![a-z])", q):
+        bm = re.search(r"\b(?:at least|more than|over|no less than|minimum(?: of)?|min|longer than)\s*" + _NUM + r"\s*(" + _DIST_UNIT + r")(?![a-z])", q)
+        lo = _to_float(bm.group(1)) * (0.621371 if re.fullmatch(r"km|kilometers?|kilometres?|k", bm.group(2)) else 1.0)
+        if prefs.get("min_mileage") is None and prefs.get("max_mileage") is None and prefs.get("target_miles") is None:
+            prefs["min_mileage"] = round(lo, 2)
+            prefs["max_mileage"] = round(max(lo + 0.1, float(MILES_CAP)), 2)
+        q = q.replace(bm.group(0), " ", 1)
     elif "half marathon" in q or "half-marathon" in q or "halfmarathon" in q:
         miles_from_text = 13.1094
     elif "marathon" in q:
         miles_from_text = 26.2188
     else:
-        n = _extract_first_number(q)
-        if n is not None:
-            if re.search(r"\bkm\b", q) or "kilometer" in q or "kilometre" in q:
-                miles_from_text = n * 0.621371
-            elif "mile" in q or re.search(r"\bmi\b", q):
-                miles_from_text = n
-            else:
+        dm = re.search(r"(?<![\w.])" + _NUM + r"\s*(" + _DIST_UNIT + r")(?![a-z])", q)
+        if dm:
+            n = _to_float(dm.group(1))
+            unit = dm.group(2)
+            miles_from_text = n * 0.621371 if re.fullmatch(r"km|kilometers?|kilometres?|k", unit) else n
+        else:
+            bare = re.sub(r"\b\d+(?:\.\d+)?\s*(?:min(?:ute)?s?|hrs?|hours?|ft|feet|foot|m|meters?|metres?|%)\b", " ", q)
+            n = _extract_first_number(bare)
+            if n is not None:
                 miles_from_text = n
 
     if miles_from_text is not None and prefs.get("target_miles") is None and (
@@ -475,13 +640,23 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
             prefs["max_mileage"] = round(max(prefs["min_mileage"] + 0.1, MILES_P90), 2)
 
     # Elevation / steepness language
+    flat_words = [
+        "flat", "no hills", "no hill", "not hilly", "avoid hills", "no climbing", "no climbs", "no elevation",
+        "minimal elevation", "minimal climb", "minimal gain", "little elevation", "little climbing",
+        "low climb", "low elevation", "gentle", "pancake", "level ground",
+    ]
     if prefs.get("max_elevation") is None and prefs.get("target_elevation_gain") is None:
-        if _contains_any(q, ["flat", "not steep", "not too steep", "low climb", "low elevation", "gentle", "easy"]):
+        if _contains_any(q, flat_words):
             prefs["max_elevation"] = round(max(100.0, ELEV_P25), 0)
-            if _contains_any(q, ["flat", "low climb", "low elevation"]):
-                prefs["flat"] = True
+            prefs["flat"] = True
+        elif _contains_any(q, ["not steep", "not too steep", "easy"]):
+            prefs["max_elevation"] = round(max(100.0, ELEV_P25), 0)
+        elif prefs.get("min_gain_ft") is not None:
+            pass
         elif _contains_any(q, ["steep", "hilly", "climb", "vert", "mountain"]):
             prefs["target_elevation_gain"] = round(max(300.0, ELEV_P75), 0)
+    elif prefs.get("flat") is None and _contains_any(q, flat_words):
+        prefs["flat"] = True
 
     # Shade / Views / Crowds
     if prefs.get("shade_preference") is None:
@@ -573,7 +748,7 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
                 prefs["require_dog_allowed"] = True
 
     # Bike-legal (soft preference becomes hard gate when intent is clear)
-    if prefs.get("require_bike_legal") is None:
+    if prefs.get("require_bike_legal") is None and not re.search(r"\b(?:no|without|not|avoid|except)\s+(?:any\s+)?(?:bikes?|bikers?|cyclists?|cycling|biking)\b", q):
         if _contains_any(q, [
             "bike", "biking", "cycling", "cyclist", "mtb", "mountain bike",
             "mountain biking", "ride", "riding", "gravel bike", "road bike",
@@ -675,7 +850,15 @@ def _validate_and_clamp_prefs(p: Dict[str, Any]) -> Dict[str, Any]:
 
     mp = num(p.get("max_proximity"))
     if mp is not None and mp > 0:
-        out["max_proximity"] = round(_clamp(mp, 1.0, 200.0), 2)
+        out["max_proximity"] = round(_clamp(mp, 0.1, 200.0), 2)
+
+    for gk in ("max_gain_ft", "min_gain_ft"):
+        gv = num(p.get(gk))
+        if gv is not None and gv >= 0:
+            out[gk] = round(min(gv, 30000.0), 0)
+
+    if isinstance(p.get("flat"), bool):
+        out["flat"] = p["flat"]
 
     ps = p.get("preferred_surface")
     if isinstance(ps, str):
@@ -855,7 +1038,7 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
         "target_elevation_gain", "max_elevation",
         "shade_preference", "views_preference", "crowds_preference",
         "max_proximity", "preferred_surface", "location", "weights",
-        "intent", "difficulty_preference",
+        "intent", "difficulty_preference", "flat", "max_gain_ft", "min_gain_ft",
         # OSM-driven preferences
         "surface_pref", "wants_facilities", "has_dog",
         "require_bike_legal", "require_dog_allowed",
@@ -888,6 +1071,9 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
                             ]
                         },
                         "max_proximity":    {"type": ["number", "null"]},
+                        "flat":             {"type": ["boolean", "null"]},
+                        "max_gain_ft":      {"type": ["number", "null"]},
+                        "min_gain_ft":      {"type": ["number", "null"]},
                         "preferred_surface": {
                             "anyOf": [
                                 {"type": "string", "enum": ["dirt", "paved", "mixed"]},

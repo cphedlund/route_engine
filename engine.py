@@ -718,6 +718,8 @@ def select_routes(
         r for r in candidates
         if _elevation_cap_ft(r, prefs) is None or float(r.elevation_gain) <= _elevation_cap_ft(r, prefs)
     ]
+    if prefs.get("min_gain_ft") is not None:
+        candidates = [r for r in candidates if float(r.elevation_gain) >= float(prefs["min_gain_ft"])]
 
     # Bounding-box geographic filter (falls back, with a note)
     bbox_min_lat = prefs.get("bbox_min_lat")
@@ -931,7 +933,11 @@ def _relax_step(prefs: Dict[str, Any], step: str) -> Optional[str]:
     """Loosen one constraint in place. Returns the explanation, or None if the constraint is not set."""
     if step == "elevation":
         if not prefs.get("flat") and prefs.get("max_gain_ft") is None:
-            return None
+            if prefs.get("min_gain_ft") is None:
+                return None
+            min_label = f"{float(prefs.pop('min_gain_ft')):.0f} ft"
+            return f"No routes had at least {min_label} of climbing, so routes with less climbing are included."
+        prefs.pop("min_gain_ft", None)
         label = "flat" if prefs.get("flat") else f"{float(prefs['max_gain_ft']):.0f} ft gain"
         prefs.pop("flat", None)
         prefs.pop("max_gain_ft", None)

@@ -199,9 +199,6 @@ cases:
   query: 5 mile hike with no hills
   tags: *id003
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not map 'no hills' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -214,9 +211,6 @@ cases:
   query: 5 mile hike with minimal elevation
   tags: *id003
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not map 'minimal elevation' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -229,9 +223,6 @@ cases:
   query: 5 mile hike under 300 ft gain
   tags: *id003
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not parse 'under 300 ft gain' into an elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -350,9 +341,6 @@ cases:
   category: flat
   query: gentle 4 mile stroll
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not map 'gentle' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi:
@@ -411,9 +399,6 @@ cases:
   category: distance
   query: a flat five mile hike
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ fails on 'a flat five mile hike' (spelled-out number and/or 'flat'); returned routes violate distance/elevation"
   expect:
     hard:
       distance_mi: *id002
@@ -456,9 +441,6 @@ cases:
   category: elevation
   query: 3 mile hike with less than 500 ft of elevation gain
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not parse 'less than 500 ft of elevation gain' into a 500 ft cap"
   expect:
     hard:
       distance_mi:
@@ -471,9 +453,6 @@ cases:
   category: elevation
   query: 6 mile hike with at least 2000 ft of climbing
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not parse 'at least 2000 ft of climbing' into an elevation minimum"
   expect:
     hard:
       distance_mi:
@@ -837,9 +816,6 @@ cases:
   category: proximity
   query: hike within 5 miles of me
   owner: atlas-nlq
-  xfail:
-    owner: atlas-nlq
-    reason: "NLQ does not parse 'within 5 miles of me' into a 5 mi proximity radius"
   preferences: *id005
   expect:
     hard:

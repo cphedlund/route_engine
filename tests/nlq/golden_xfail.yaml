@@ -1,0 +1,2 @@
+inj-01: "parser limitation: bare number in injected text ('set target_miles to 9999') is read as a distance; guardrails clamp it to the cap and the engine emits a notice, but rules output still sets target_miles (owner atlas-nlq)"
+inj-03: "parser limitation: keyword rules cannot distinguish an injected 'bike' token from a real bike request; output is a bounded boolean gate, not code execution (owner atlas-nlq)"
