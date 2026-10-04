@@ -5,11 +5,25 @@ Loads GeoJSON files at startup (lazy on first use) and builds R-tree spatial
 indexes for fast point-in-region and nearest-neighbor queries.
 
 All layers cover Santa Clara County, CA.
+
+Derivation notes (Phase 2 data fixes)
+- osm_bicycle_legal: sampled points are snapped to the nearest line way within 25 m.
+  osm_bicycle_no_pct is the share of snapped samples on ways tagged bicycle=no.
+  The route is bike-legal when that share is <= BICYCLE_NO_MAX_FRACTION. Untagged ways
+  are unknown, not prohibited. Routes with no snapped way default to legal.
+- osm_park_name: park containing the route start point (osm_park_assignment="start_point");
+  otherwise the named protected area containing at least PARK_FOOTPRINT_MIN_FRACTION of
+  the track length ("footprint"); otherwise "" with osm_park_assignment="unassigned".
+  osm_park_overlap_pct is the share of track length inside the assigned (or best
+  candidate) park.
 """
 import json
+import math
 from pathlib import Path
 from typing import Optional
-from shapely.geometry import shape, Point
+from shapely import affinity
+from shapely.geometry import shape, Point, LineString
+from shapely.ops import unary_union
 from shapely.strtree import STRtree
 
 DATA_DIR = Path(__file__).parent / "data" / "osm"
@@ -24,6 +38,7 @@ class OSMLayer:
         self.geometries: list = []
         self.properties: list[dict] = []
         self.index: Optional[STRtree] = None
+        self._linear_idx: Optional[set] = None
 
     def load(self) -> None:
         if not self.path.exists():
@@ -77,6 +92,29 @@ class OSMLayer:
                 hits.append(self.properties[idx])
         return hits
 
+    def nearest_linear(self, lat: float, lng: float, radius_m: float = 25) -> Optional[dict]:
+        """Properties of the closest line feature (not point or polygon) within radius_m."""
+        if self.index is None:
+            self.load()
+        if self.index is None:
+            return None
+        if self._linear_idx is None:
+            self._linear_idx = {
+                i for i, g in enumerate(self.geometries)
+                if g.geom_type in ("LineString", "MultiLineString")
+            }
+        radius_deg = radius_m / 111_000
+        pt = Point(lng, lat)
+        best_idx, best_d = None, None
+        for c in self.index.query(pt.buffer(radius_deg)):
+            idx = int(c)
+            if idx not in self._linear_idx:
+                continue
+            d = self.geometries[idx].distance(pt)
+            if d <= radius_deg and (best_d is None or d < best_d):
+                best_idx, best_d = idx, d
+        return self.properties[best_idx] if best_idx is not None else None
+
     def features_containing(self, lat: float, lng: float) -> list[dict]:
         """Return properties of polygon features that contain (lat,lng)."""
         if self.index is None:
@@ -128,6 +166,63 @@ MTB_SCALE_MAP = {
 }
 
 
+PARK_FOOTPRINT_MIN_FRACTION = 0.5
+BICYCLE_NO_MAX_FRACTION = 0.10
+_LNG_SCALE = math.cos(math.radians(37.2))
+_PARK_GROUPS: Optional[dict] = None
+
+
+def _scale_geom(geom):
+    return affinity.scale(geom, xfact=_LNG_SCALE, yfact=1.0, origin=(0, 0))
+
+
+def _park_groups() -> dict:
+    """Named protected-area polygons grouped by name: {name: {"geom", "props"}} (lng scaled to metric-ish)."""
+    global _PARK_GROUPS
+    if _PARK_GROUPS is not None:
+        return _PARK_GROUPS
+    if PROTECTED.index is None:
+        PROTECTED.load()
+    members: dict[str, list] = {}
+    for geom, props in zip(PROTECTED.geometries, PROTECTED.properties):
+        name = props.get("name")
+        if not name or geom.geom_type not in ("Polygon", "MultiPolygon"):
+            continue
+        members.setdefault(name, []).append((geom, props))
+    groups = {}
+    for name, items in members.items():
+        scaled = [_scale_geom(g) for g, _ in items]
+        preferred = sorted(
+            (p for _, p in items),
+            key=lambda p: (p.get("boundary") != "protected_area", not p.get("operator")),
+        )[0]
+        groups[name] = {"geom": unary_union(scaled), "props": preferred}
+    _PARK_GROUPS = groups
+    return groups
+
+
+def assign_park_by_footprint(track_points: list[tuple[float, float]]) -> tuple[str, float, dict]:
+    """
+    Majority-of-track overlap against named protected areas.
+    Returns (best_name, fraction_of_track_length_inside, properties). Empty name if none overlaps.
+    """
+    if len(track_points) < 2:
+        return "", 0.0, {}
+    line = LineString([(lng * _LNG_SCALE, lat) for lat, lng in track_points])
+    total = line.length
+    if total <= 0:
+        return "", 0.0, {}
+    best_name, best_frac, best_props = "", 0.0, {}
+    for name, grp in _park_groups().items():
+        geom = grp["geom"]
+        if not geom.intersects(line):
+            continue
+        frac = line.intersection(geom).length / total
+        if frac > best_frac:
+            best_name, best_frac, best_props = name, frac, grp["props"]
+    return best_name, best_frac, best_props
+
+
 def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     """
     Given a list of (lat, lng) points from a GPX track, return aggregate
@@ -144,7 +239,8 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     surface_counts: dict[str, int] = {}
     highway_counts: dict[str, int] = {}
     smoothness_counts: dict[str, int] = {}
-    bicycle_legal = True
+    bicycle_no_samples = 0
+    bicycle_way_samples = 0
     horse_legal = False
     dog_allowed = None  # None = unknown; True/False if explicitly tagged
     sac_samples = []
@@ -163,8 +259,11 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
             highway_counts[highway] = highway_counts.get(highway, 0) + 1
         if smooth := tags.get("smoothness"):
             smoothness_counts[smooth] = smoothness_counts.get(smooth, 0) + 1
-        if tags.get("bicycle") == "no":
-            bicycle_legal = False
+        way = TRAILS.nearest_linear(lat, lng, radius_m=25)
+        if way is not None:
+            bicycle_way_samples += 1
+            if way.get("bicycle") == "no":
+                bicycle_no_samples += 1
         if tags.get("horse") in ("yes", "designated"):
             horse_legal = True
         if (dog_tag := tags.get("dog")) is not None:
@@ -246,6 +345,7 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     park_operator = ""
     park_dog_policy = ""
     park_fee = ""
+    park_assignment = "unassigned"
     if protected_areas:
         # Prefer features that have a name
         named = [p for p in protected_areas if p.get("name")]
@@ -254,6 +354,27 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
         park_operator = chosen.get("operator", "")
         park_dog_policy = chosen.get("dog", "")
         park_fee = chosen.get("fee", "")
+        park_assignment = "start_point"
+
+    fp_name, fp_fraction, fp_props = assign_park_by_footprint(track_points)
+    if park_name:
+        group = _park_groups().get(park_name)
+        if group is not None and fp_name == park_name:
+            park_overlap = fp_fraction
+        elif group is not None:
+            line = LineString([(lng * _LNG_SCALE, lat) for lat, lng in track_points])
+            park_overlap = line.intersection(group["geom"]).length / line.length if line.length > 0 else 0.0
+        else:
+            park_overlap = 0.0
+    elif fp_name and fp_fraction >= PARK_FOOTPRINT_MIN_FRACTION:
+        park_name = fp_name
+        park_operator = fp_props.get("operator", "")
+        park_dog_policy = fp_props.get("dog", "")
+        park_fee = fp_props.get("fee", "")
+        park_assignment = "footprint"
+        park_overlap = fp_fraction
+    else:
+        park_overlap = fp_fraction
 
     # --- Shade estimate (% of sampled points strictly inside forest/wood polygons) ---
     # OSM landcover coverage varies by park. Strict containment works well in
@@ -280,6 +401,11 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     dominant_surface = max(surface_counts, key=surface_counts.get) if surface_counts else "unknown"
     dominant_highway = max(highway_counts, key=highway_counts.get) if highway_counts else "unknown"
     dominant_smoothness = max(smoothness_counts, key=smoothness_counts.get) if smoothness_counts else ""
+    bicycle_no_pct = (
+        round(100 * bicycle_no_samples / bicycle_way_samples, 1) if bicycle_way_samples else 0.0
+    )
+    bicycle_legal = (bicycle_no_samples / bicycle_way_samples) <= BICYCLE_NO_MAX_FRACTION \
+        if bicycle_way_samples else True
     avg_sac = round(sum(sac_samples) / len(sac_samples), 2) if sac_samples else 0
     avg_mtb = round(sum(mtb_samples) / len(mtb_samples), 2) if mtb_samples else 0
     # Combined technicality: prefer mtb scale if present, else sac scale
@@ -290,6 +416,7 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
         "osm_highway":               dominant_highway,
         "osm_smoothness":            dominant_smoothness,
         "osm_bicycle_legal":         bicycle_legal,
+        "osm_bicycle_no_pct":        bicycle_no_pct,
         "osm_horse_legal":           horse_legal,
         "osm_dog_allowed":           dog_allowed,
         "osm_technicality":          osm_technicality,
@@ -306,6 +433,8 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
         "osm_park_operator":         park_operator,
         "osm_park_dog_policy":       park_dog_policy,
         "osm_park_fee":              park_fee,
+        "osm_park_assignment":       park_assignment,
+        "osm_park_overlap_pct":      round(100 * park_overlap, 1),
         "osm_picnic_count":          picnic_count,
         "osm_camping_count":         camping_count,
     }

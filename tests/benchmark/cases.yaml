@@ -993,6 +993,9 @@ cases:
   category: infeasible
   query: bike ride at Almaden Quicksilver
   owner: atlas-route-engine
+  xfail:
+    owner: atlas-route-engine
+    reason: "benchmark-truth change from Phase 2 data fix: osm_bicycle_legal was False for every Quicksilver route (any single bicycle=no sample); now 5 routes are bike-legal, so the case is feasible. Needs Carson's decision: drop infeasible flag or keep as-is"
   expect:
     hard:
       park: Almaden Quicksilver County Park
@@ -1034,6 +1037,9 @@ cases:
   category: infeasible
   query: hike at Anderson Lake
   owner: atlas-route-engine
+  xfail:
+    owner: atlas-route-engine
+    reason: "benchmark-truth change from Phase 2 data fix: footprint park assignment filled osm_park_name for Lakeview Trail and Rosendin Pond Loop (Anderson Lake County Park), so a hike there is now feasible. Needs Carson's decision"
   expect:
     hard:
       park: Anderson Lake County Park

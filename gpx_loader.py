@@ -1,3 +1,15 @@
+"""
+GPX loader for the route engine.
+
+Canonical units
+- distance_miles: statute miles (haversine, R = 3958.7613 mi)
+- elevation_gain, osm elevations, GPX <ele>: GPX elevations are metres; derived gain is stored in feet
+- grades: percent (rise / run x 100)
+- coordinates: WGS84 decimal degrees, (lat, lng) tuples internally
+
+Validation (see validate_track): tracks failing a rule are rejected, logged with a reason,
+and counted in LAST_LOAD_REPORT. Rejected files never reach the route list.
+"""
 import math
 import hashlib
 from pathlib import Path
@@ -37,6 +49,86 @@ def _extract_points(gpx) -> List[Tuple[float, float, Optional[float]]]:
         for p in getattr(rte, "points", []):
             pts.append((p.latitude, p.longitude, getattr(p, "elevation", None)))
     return pts
+
+
+# ============================================================
+# Validation
+# ============================================================
+
+MIN_POINTS = 10
+MAX_JUMP_M = 500.0
+MAX_ROUTE_MILES = 100.0
+MIN_ROUTE_MILES = 0.05
+MIN_ELEVATION_COVERAGE = 0.9
+ELEVATION_RANGE_M = (-450.0, 9000.0)
+SCC_BBOX = (36.89, 37.49, -122.21, -121.20)
+REGION_PAD_DEG = 0.25
+OUT_OF_COUNTY_POLICY = "flag"
+
+LAST_LOAD_REPORT: Dict[str, Any] = {}
+
+
+def _record(bucket: List[Dict[str, Any]], filename: str, **fields: Any) -> None:
+    entry = {"file": filename}
+    entry.update(fields)
+    bucket.append(entry)
+
+
+def _in_bbox(lat: float, lng: float, bbox: Tuple[float, float, float, float], pad: float = 0.0) -> bool:
+    return (bbox[0] - pad <= lat <= bbox[1] + pad) and (bbox[2] - pad <= lng <= bbox[3] + pad)
+
+
+def validate_track(pts: List[Tuple[float, float, Optional[float]]]) -> Dict[str, Any]:
+    """
+    Returns {"ok": bool, "reason": str, "detail": str, "warnings": [str], "distance_miles": float}.
+    Hard rejections: too_few_points, nan_coordinate, bad_coordinate, missing_elevation,
+    bad_elevation, teleport_jump, outside_region, zero_length, impossible_distance.
+    Soft flag: outside_county (inside the padded region but outside SCC_BBOX) when
+    OUT_OF_COUNTY_POLICY == "flag"; rejected when it is "reject".
+    """
+    def fail(reason: str, detail: str = "") -> Dict[str, Any]:
+        return {"ok": False, "reason": reason, "detail": detail, "warnings": [], "distance_miles": 0.0}
+
+    if len(pts) < MIN_POINTS:
+        return fail("too_few_points", f"{len(pts)} < {MIN_POINTS}")
+
+    for lat, lng, ele in pts:
+        if lat is None or lng is None or not (math.isfinite(lat) and math.isfinite(lng)):
+            return fail("nan_coordinate")
+        if not (-90.0 <= lat <= 90.0 and -180.0 <= lng <= 180.0):
+            return fail("bad_coordinate", f"{lat},{lng}")
+
+    with_ele = [p[2] for p in pts if p[2] is not None]
+    if any(not math.isfinite(e) for e in with_ele):
+        return fail("bad_elevation", "non-finite elevation")
+    if len(with_ele) / len(pts) < MIN_ELEVATION_COVERAGE:
+        return fail("missing_elevation", f"{len(with_ele)}/{len(pts)} points have elevation")
+    if any(not (ELEVATION_RANGE_M[0] <= e <= ELEVATION_RANGE_M[1]) for e in with_ele):
+        return fail("bad_elevation", f"outside {ELEVATION_RANGE_M} m")
+
+    warnings: List[str] = []
+    outside_county = [p for p in pts if not _in_bbox(p[0], p[1], SCC_BBOX)]
+    if outside_county:
+        if any(not _in_bbox(p[0], p[1], SCC_BBOX, REGION_PAD_DEG) for p in pts):
+            return fail("outside_region", "points beyond Santa Clara County bbox + padding")
+        if OUT_OF_COUNTY_POLICY == "reject":
+            return fail("outside_county", f"{len(outside_county)} points outside SCC bbox")
+        warnings.append("outside_county")
+
+    total = 0.0
+    worst = 0.0
+    for a, b in zip(pts, pts[1:]):
+        d_mi = haversine_miles((a[0], a[1]), (b[0], b[1]))
+        total += d_mi
+        worst = max(worst, d_mi * 1609.344)
+    if worst > MAX_JUMP_M:
+        return fail("teleport_jump", f"max consecutive gap {worst:.0f} m > {MAX_JUMP_M:.0f} m")
+    if total < MIN_ROUTE_MILES:
+        return fail("zero_length", f"{total:.3f} mi")
+    if total > MAX_ROUTE_MILES:
+        return fail("impossible_distance", f"{total:.1f} mi > {MAX_ROUTE_MILES:.0f} mi")
+
+    return {"ok": True, "reason": "", "detail": "", "warnings": warnings, "distance_miles": total}
 
 
 # ============================================================
@@ -274,15 +366,25 @@ def _compute_grade_variance(grades: List[float]) -> float:
 def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
     base = Path(gpx_dir)
     routes: List[Dict[str, Any]] = []
+    rejected: List[Dict[str, str]] = []
+    flagged: List[Dict[str, Any]] = []
+    scanned = 0
 
     for path in sorted(base.rglob("*.gpx")):
+        scanned += 1
         try:
             with path.open("r", encoding="utf-8", errors="ignore") as f:
                 gpx = gpxpy.parse(f)
 
             pts = _extract_points(gpx)
-            if len(pts) < 2:
+            verdict = validate_track(pts)
+            if not verdict["ok"]:
+                _record(rejected, path.name, reason=verdict["reason"], detail=verdict["detail"])
+                print(f"[GPX] REJECTED {path.name}: {verdict['reason']} ({verdict['detail']})")
                 continue
+            if verdict["warnings"]:
+                _record(flagged, path.name, warnings=verdict["warnings"])
+                print(f"[GPX] FLAGGED {path.name}: {','.join(verdict['warnings'])}")
 
             # -------------------------
             # Distance + gradient profile
@@ -421,6 +523,7 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 "osm_highway":               osm_data.get("osm_highway", "unknown"),
                 "osm_smoothness":            osm_data.get("osm_smoothness", ""),
                 "osm_bicycle_legal":         osm_data.get("osm_bicycle_legal", True),
+                "osm_bicycle_no_pct":        osm_data.get("osm_bicycle_no_pct", 0.0),
                 "osm_horse_legal":           osm_data.get("osm_horse_legal", False),
                 "osm_dog_allowed":           osm_data.get("osm_dog_allowed", None),
                 "osm_technicality":          osm_data.get("osm_technicality", 0),
@@ -437,6 +540,8 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 "osm_park_operator":         osm_data.get("osm_park_operator", ""),
                 "osm_park_dog_policy":       osm_data.get("osm_park_dog_policy", ""),
                 "osm_park_fee":              osm_data.get("osm_park_fee", ""),
+                "osm_park_assignment":       osm_data.get("osm_park_assignment", ""),
+                "osm_park_overlap_pct":      osm_data.get("osm_park_overlap_pct", 0.0),
                 "osm_picnic_count":          osm_data.get("osm_picnic_count", 0),
                 "osm_camping_count":         osm_data.get("osm_camping_count", 0),
                 # Internal-only fields
@@ -446,7 +551,22 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
             })
 
         except Exception as e:
-            print(f"[GPX] Skipping {path.name}: {e}")
+            _record(rejected, path.name, reason="parse_error", detail=str(e))
+            print(f"[GPX] REJECTED {path.name}: parse_error ({e})")
+
+    reasons: Dict[str, int] = {}
+    for item in rejected:
+        reasons[item["reason"]] = reasons.get(item["reason"], 0) + 1
+    LAST_LOAD_REPORT.clear()
+    LAST_LOAD_REPORT.update({
+        "scanned": scanned,
+        "loaded": len(routes),
+        "rejected": rejected,
+        "rejected_count": len(rejected),
+        "rejected_by_reason": reasons,
+        "flagged": flagged,
+    })
+    print(f"[GPX] Validation: scanned={scanned} loaded={len(routes)} rejected={len(rejected)} {reasons} flagged={len(flagged)}")
 
     # =========================================================
     # Post-load: log enrichment summary

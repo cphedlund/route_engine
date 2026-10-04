@@ -35,6 +35,7 @@ class Route:
     osm_highway: str = "unknown"
     osm_smoothness: str = ""
     osm_bicycle_legal: bool = True
+    osm_bicycle_no_pct: float = 0.0
     osm_horse_legal: bool = False
     osm_dog_allowed: Optional[bool] = None
     osm_technicality: float = 0.0      # 0-6 scale (mtb:scale or sac_scale derived)
@@ -51,6 +52,8 @@ class Route:
     osm_park_operator: str = ""
     osm_park_dog_policy: str = ""
     osm_park_fee: str = ""
+    osm_park_assignment: str = ""
+    osm_park_overlap_pct: float = 0.0
     osm_picnic_count: int = 0
     osm_camping_count: int = 0
 
