@@ -16,7 +16,7 @@ Anything else is "unverified" and fails closed. The 10 routes below are heuristi
 | Verified (GPX paved and OSM paved) | 26 |
 | Unverified, GPX and OSM disagree | 50 |
 | Unverified, OSM unknown (listed below) | 10 |
-| Not accessible (neither says paved) | 0 |
+| Not accessible (neither says paved) | 169 |
 
 ## The 10 routes
 

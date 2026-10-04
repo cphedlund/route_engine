@@ -23,7 +23,7 @@ def classify(r):
     state = wheelchair_access(R)
     if state == "unverified":
         return "unverified_unknown" if r["osm_surface"] == "unknown" and r["surface_type"] == "paved" else "unverified_disagree"
-    return state
+    return state.replace(" ", "_")
 
 
 def rows():
