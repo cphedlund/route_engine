@@ -54,11 +54,11 @@ EXPLANATION_KEYS = ("message", "explanation", "relaxation_note", "notice")
 
 PAVED_SURFACES = {"paved", "asphalt", "concrete", "paving_stones"}
 
-# Wheelchair ground truth is deliberately stricter than the engine gate. The
-# engine accepts a route if EITHER osm_surface is paved OR the GPX heuristic
-# surface_type is "paved". A wheelchair user is harmed by a false positive, so
-# the benchmark requires the heuristic to say paved AND OSM to not contradict it
-# (osm_surface paved or unknown). 45 routes are heuristic-paved but OSM-unpaved.
+# Wheelchair ground truth mirrors the engine's strict rule (computed here from route
+# data, not by calling the engine): a route is accessible only when the GPX heuristic
+# surface_type is "paved" AND osm_surface is a paved value. Disagreement or
+# osm_surface == "unknown" is unverified and counts as not accessible. A false
+# positive harms a wheelchair user.
 
 _ENGINE: Dict[str, Any] = {}
 
@@ -104,7 +104,7 @@ def route_facts(r) -> Dict[str, Any]:
         "surface_type": r.surface_type,
         "bike_legal": bool(r.osm_bicycle_legal),
         "dog_ok": (r.osm_dog_allowed is not False and r.osm_park_dog_policy != "no"),
-        "paved": (r.surface_type == "paved") and (r.osm_surface in PAVED_SURFACES or r.osm_surface == "unknown"),
+        "paved": (r.surface_type == "paved") and (r.osm_surface in PAVED_SURFACES),
         "start": (r.start_lat, r.start_lng) if r.start_lat is not None and r.start_lng is not None else None,
     }
 
