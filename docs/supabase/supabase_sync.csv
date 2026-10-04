@@ -1,0 +1,256 @@
+supabase_id,engine_route_id,match_by,start_dist_mi,supabase_name,name_fix,old_distance,new_distance,old_gain,new_gain,bikes_allowed,dogs_allowed,park_name,status
+2a69d218-cc96-4c43-8ad9-d516b3a02df5,93e8e000c11ae910,name+start,0.0,Bull Run + English Camp Loop,,7.69,7.69,1694.0,1777,false,,Almaden Quicksilver County Park,update
+1844eac4-f79c-4461-a814-1cbbef25cfe7,b0c0a631f76353d7,name+start,0.0,Day Tunnel Loop,,4.18,4.18,851.0,907,false,,Almaden Quicksilver County Park,update
+eca0e434-0abc-4fa7-aac5-960c8ad53858,be20526040cc0317,name+start,0.0,Deep Gulch Loop,,2.61,2.61,766.0,790,false,,Almaden Quicksilver County Park,update
+832c954a-0361-4888-b2ac-89cd208d5d0e,18208676cabbf915,name+start,0.0,English Camp Loop via Wood Rd,,5.0,5.0,761.0,831,true,,Almaden Quicksilver County Park,update
+0901a7b4-2818-466a-be9f-ad08c8623a30,cf30c104eaac0533,name+start,0.0,McAbee to Reservoir Overlook,,4.37,4.37,655.0,702,false,,Almaden Quicksilver County Park,update
+57838293-9ef1-478f-9158-7290ddbcdda0,cfeaac93f137b403,name+start,0.0,Mine Hill + Full Randol,,12.29,12.29,1654.0,1787,false,,Almaden Quicksilver County Park,update
+628b5ad3-6e17-431b-bdbd-77a765002cc9,7b7e994b548ac8fa,name+start,0.0,Mine Hill Lollipop,,6.69,6.69,1116.0,1201,false,,Almaden Quicksilver County Park,update
+694514bd-daeb-4be8-a191-de9dec8a8c3f,12044c4ef7cdec36,name+start,0.0,Mine Hill / Randol Lollipop,,7.85,7.85,1239.0,1340,false,,Almaden Quicksilver County Park,update
+3a443c4a-9ddc-4b29-ba6c-57b9974e2f0e,7e7ad8d5b001a81b,name+start,0.0,Mount Umunhum via Quicksilver,,23.69,23.69,4153.0,4608,false,false,Almaden Quicksilver County Park,update
+80c166f2-3cb6-48e7-86d5-7732e8b6a741,77805c3d0040ea44,name+start,0.0,Mount Umunhum,,7.9,7.9,999.0,1224,true,false,Sierra Azul Open Space Preserve,update
+cee59d95-ee2e-4960-86a6-cd6d0e5a9bbb,ea35e09e87c20be3,name+start,0.0,Serpentine Loop,,5.3,5.3,1376.0,1420,false,true,Calero County Park,update
+72192af9-25c9-40db-a2c0-f62c6de587c8,34daa9d84b04c4c3,name+start,0.0,Skyline Trail south,,6.03,6.03,999.0,1150,false,true,Sanborn County Park,update
+df33fcfd-9acd-4386-980a-19d54ad224ab,2854eb0c6b4addc7,name+start,0.0,Coyote Ridge Loop via Mendoza,,3.8,3.8,549.0,586,false,,Coyote Lake - Harvey Bear Ranch County Park,update
+e40dd124-1f24-4d7f-a2b0-ba10b14b94a3,ce44fd913a28c821,name+start,0.0,Coyote Ridge Out &amp; Back,Coyote Ridge Out & Back,5.07,5.07,484.0,556,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+195b59f4-b9a1-43ee-96fb-059d7ec896b4,9a581bccbfd02c79,name+start,0.0,New Almaden / Randol / Mine Hill Loop,,7.72,7.72,1119.0,1205,false,,Almaden Quicksilver County Park,update
+6262f118-7470-4027-97f4-ba0f91fe7c06,126c3f0404a902dc,name+start,0.0,New Almaden / Randol / Mine Hill,,11.45,11.45,1648.0,1782,false,,Almaden Quicksilver County Park,update
+b9c32990-ef3a-4c57-82e5-b25db5bdc9c8,8095c541c93689d2,name+start,0.0,Prairie Dog Loop,,1.82,1.82,142.0,184,true,,Calero County Park,update
+ea6870f5-781c-4ca7-9df1-638a3bf82cf2,e7090766fb16a7e6,name+start,0.0,Priest Rock + Limekiln,,10.65,10.65,2769.0,2893,true,true,Lexington Reservoir County Park,update
+c65b9d05-9a10-4320-9dfa-f980a92e2b5a,881036b187bb38c5,name+start,0.0,Priest Rock,,7.59,7.59,2131.0,2215,true,true,Lexington Reservoir County Park,update
+866746b2-b238-463e-80f6-8e25f3c251a3,9687d6ca4696d00a,name+start,0.0,Providencia Pond,,6.34,6.34,950.0,1029,false,,Almaden Quicksilver County Park,update
+e5b9a3fa-0917-4384-9177-e75458d9663d,c606ab75b44aa035,name+start,0.0,Quarry Park Loop,,0.64,0.64,158.0,183,false,true,Quarry Park,update
+79b699f2-ec24-4bc9-be13-eaf92800cc11,ea43c5a3218fa7ae,name+start,0.0,Recov,,6.12,6.11,746.0,812,false,,Almaden Quicksilver County Park,update
+faa372f9-3e96-4cb0-a177-81fd3f17f3fd,e6a6c4ccca314a5d,name+start,0.0,Small Loop @ Quicksilver,,1.59,1.59,234.0,262,false,,Almaden Quicksilver County Park,update
+d6d67cf8-6721-4465-9a65-8b7d71f2cbfd,a9464d7f73248330,name+start,0.0,Small Loop CCW,,2.43,2.43,364.0,394,false,,Almaden Quicksilver County Park,update
+f8575e5f-6be8-47fb-805f-baee9b4d6ee3,ccc40521a1b83273,name+start,0.0,Small loop @ Quicksilver,,2.44,2.44,358.0,399,false,,Almaden Quicksilver County Park,update
+da3bf214-459f-44d4-8233-e72a5a24037b,5f6abfe1aba7cc41,name+start,0.0,Stevens Creek / Long Ridge Loop,,9.72,9.72,1897.0,2017,false,true,Upper Stevens Creek County Park,update
+d436a2f4-230a-4127-a7b3-2231500bf2a0,9517380b92172178,name+start,0.0,Stiles Ranch,,2.14,2.14,12.0,65,true,,,update
+919b9041-2551-47be-83ef-ff7d2dc6a2a9,fff54c3875848af5,name+start,0.0,Sunnyvale Baylands Park,,1.1,1.1,0.0,16,true,,Sunnyvale Baylands Park,update
+00725eed-c09e-4d9f-88d3-b088ad1b655a,1eda41d6d1253498,name+start,0.0,The Claw,,7.76,7.76,906.0,1074,false,true,Calero County Park,update
+8fdd5d19-84fb-4ebf-9c2a-6f498c2b1ee3,0fbad159f504f7fd,name+start,0.0,Big Coyote Ridge Loop via Mendoza,,13.1,13.1,1671.0,1876,false,,Coyote Lake - Harvey Bear Ranch County Park,update
+732c2bfe-5dd4-48bd-bcb8-901798291810,31b035ffb490db55,name+start,0.0,Sunnyvale Mountain Loop,,0.48,0.48,72.0,76,false,,,update
+814e080a-d066-4366-b511-5b3abdbe3fb6,8fd04735ae9e86c4,name+start,0.0,Two Moon Lake,,1.01,1.01,87.0,108,true,false,Long Ridge Open Space Preserve,update
+a4cc0256-7ebb-41d2-9e9b-b613d791fae2,6296760013ab2fe1,name+start,0.0,Upper Bear Creek Redwoods,,5.39,5.39,1022.0,1152,false,,Bear Creek Redwoods Open Space Preserve,update
+abe9bbf5-c76e-4b98-a682-3429f54dd199,f090e8031e5f06e9,name+start,0.0,Virl O. Norton Loop,,2.94,2.94,814.0,849,false,,Almaden Quicksilver County Park,update
+29bd5fca-1932-4449-a289-c5df55a32adb,e06b5ebb9ccb6ac3,name+start,0.0,Webb Canyon Loop,,5.43,5.43,851.0,927,false,,Almaden Quicksilver County Park,update
+2dae80aa-6c60-4539-8bb2-7906d36c4d99,500299261b819a70,name+start,0.0,Wikiloc - Mt Umunhum loop from Woods Trail's trail head.,,16.29,16.29,2491.0,3028,true,false,Sierra Azul Open Space Preserve,update
+5dc85162-b4b6-43fe-9b0e-a0121c7d9d80,9c36d48836ec9df5,name+start,0.0,Wikiloc - New Almaden Quicksilver English Town,,5.93,5.93,3751.0,3759,false,,Almaden Quicksilver County Park,update
+23ae09dd-cc2d-4810-898b-897201166256,60ed35566f62c04c,name+start,0.0,Wikiloc - New Almaden Quicksilver Park. 10 mile hike.,,9.86,9.86,835.0,2182,false,,Almaden Quicksilver County Park,update
+790adb9d-2c06-46aa-9949-e14167918656,1759e7a49b361c09,name+start,0.0,Wikiloc - Nisene Marks,,16.75,16.75,3075.0,4933,false,false,,update
+6c315ed4-61e4-42c9-a3ae-560c9419963e,97e5ef191f0f3fee,name+start,0.0,Wikiloc - Santa Teresa County Park Loop,,9.21,9.21,828.0,2355,true,,Santa Teresa County Park,update
+5bcfdb6a-2c54-4877-afd0-274564681b4e,a7408e7935145e72,name+start,0.0,Alviso Medium Loop,,6.5,6.5,0.0,49,false,true,Alviso Marina County Park,update
+26fe233e-9fcf-444b-b208-5b19491b9050,0992cb2fa5997772,name+start,0.0,Alviso Mini Loop,,3.03,3.03,10.0,28,false,true,Alviso Marina County Park,update
+267375a3-a1c6-4713-8a2c-c3dc4dd1521a,20ed0a4daf53cfec,name+start,0.0,Alviso Small Loop,,4.52,4.52,6.0,37,false,false,Alviso Marina County Park,update
+2447b2c8-0f34-49b3-a074-0fb356dba158,fb99716aa693c694,name+start,0.0,Big Alviso Loop,,8.72,8.72,6.0,55,false,false,Alviso Marina County Park,update
+e41ce9ab-c717-46b1-996a-a33282747da7,3d8d230d51624574,name+start,0.0,Lakeview Trail,,1.63,1.63,190.0,212,true,,Anderson Lake County Park,update
+57ac4676-66d3-4712-9219-634e9972e85b,270bf04821300c5d,name+start,0.0,Calaveras Loop,,7.82,7.82,1081.0,1174,true,true,Coyote Lake - Harvey Bear Ranch County Park,update
+109f26af-c291-4c37-8d9a-337e4595e3f8,423f74902dd28a48,name+start,0.0,Rosendin Pond Loop,,0.99,0.99,93.0,116,true,,Anderson Lake County Park,update
+a4a2ad7b-8ea2-4d1b-bf81-1a432ecf8116,5c9deb884d5ed26a,name+start,0.0,Bald Peaks Out &amp; Back,Bald Peaks Out & Back,15.21,15.21,1579.0,1961,false,,Calero County Park,update
+20257017-771b-494f-9ebb-f82abfac8bb6,99b60506afba01a3,name+start,0.0,Cottle Rest + Bald Peak Trail,,9.84,9.84,1719.0,1943,false,,Calero County Park,update
+a33ff455-1813-49e6-83f5-e873a1b3b9f5,b49f41102c760d98,name+start,0.0,Figueroa Loop,,3.65,3.65,587.0,621,false,true,Calero County Park,update
+7d4e66b1-ffe0-475b-81a4-2fc1c8c5f3f6,65968f3501d53705,name+start,0.0,Junction &amp; Back,Junction & Back,11.15,11.15,589.0,931,true,true,Calero County Park,update
+760ef6f3-818a-42ea-8ef1-8d4dc8454f7d,bbbe49df852359ab,name+start,0.0,Lisa Killough - Cottle CCW Loop,,8.41,8.41,554.0,794,true,,Calero County Park,update
+0c8a4d38-596b-4d1c-8200-760e5f61cea1,a82a6f8e6d350310,name+start,0.0,Lisa Killough Loop CW,,8.41,8.41,517.0,793,true,,Calero County Park,update
+f08ad0bc-89e0-4822-89aa-f056cb741e21,dfcc2fb1f58b8091,name+start,0.0,Lisa's Lookout,,5.58,5.58,428.0,595,true,,Calero County Park,update
+62baaac4-57e7-4d31-9015-800d2fcdd806,c80bd2fbe5364cdc,name+start,0.0,Los Cerritos Trail,,3.69,3.69,698.0,757,false,true,Calero County Park,update
+b9d741b2-895a-4cca-b59a-efa8423b7978,b96a01be9bd5ebf1,name+start,0.0,Pena Loop,,3.46,3.46,764.0,793,false,true,Calero County Park,update
+34157e29-baae-4a4e-965d-4f3cc6a1cec4,3b6fb271e35d37f2,name+start,0.0,San Vicente to Cottle Rest Site,,8.88,8.88,740.0,972,true,,Calero County Park,update
+5c47d89b-27ed-418d-a48a-ae821a8a411e,70b01683fb3af036,name+start,0.0,Serpentine Loop Trail,,5.35,5.35,1370.0,1421,false,true,Calero County Park,update
+3eabece3-5409-4aa5-8f0b-36eccf5ca58b,7037cd88943029cb,name+start,0.0,Harvey Bear Figure 8,,11.01,11.01,1607.0,1717,true,true,Coyote Lake - Harvey Bear Ranch County Park,update
+4286e486-dffa-40e5-a7f4-aafabb762caf,a20b399f209bf9f5,name+start,0.0,Harvey Bear Ranch,,2.03,2.03,65.0,80,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+5b28556c-65db-40c4-a726-fdc713bb6519,cb06aab42c623401,name+start,0.0,Mendoza Lollipop via Harvey Bear,,13.04,13.04,1716.0,1931,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+1586978a-e580-4797-88cc-ea4a84b49508,a51b1338030278d7,name+start,0.0,Rancho San Ysidro Loop,,5.89,5.89,1015.0,1081,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+cdeb002e-0cf5-428a-adf7-d00e91c359e0,c1d1aad6a8f1bc69,name+start,0.0,Savannah Loop via Mendoza,,11.03,11.03,1118.0,1322,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+5f78dfbf-1635-4b67-a738-2bcb9e07e47f,859f3e08bc1c300a,name+start,0.0,Savannah Loop,,6.15,6.15,826.0,922,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+66383b5c-e337-4996-b472-051f307fe202,bdc091b1d798dcfc,name+start,0.0,The Spike,,6.01,6.01,958.0,1010,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+64c34c00-2bee-42b7-94c8-210b2ba2a304,5c82857cf2d37d0e,name+start,0.0,Willow Springs Loop,,5.85,5.85,1010.0,1082,true,,Coyote Lake - Harvey Bear Ranch County Park,update
+8d9021e4-16ea-4c99-8a4c-035aa799ee34,4c477b939bffd650,name+start,0.0,Woodland Valley Loop,,12.65,12.65,1803.0,1937,true,true,Coyote Lake - Harvey Bear Ranch County Park,update
+3bb44a55-c173-4296-9168-b02f652ea27e,3cf6aa40045fa1c0,name+start,0.0,Calaveras Ridge Loop,,1.56,1.56,321.0,340,false,,Ed R. Levin County Park,update
+ea7e7b36-4ab1-42c1-b6bc-12abdcad6291,c1990a11da9c3232,name+start,0.0,Calera Creek Loop,,3.61,3.61,780.0,816,false,,Ed R. Levin County Park,update
+fd4b94ee-ec79-4f48-a156-0d7be7cc485b,23d75965427a4c8e,name+start,0.0,Hang Glider Launchpad,,2.0,2.0,575.0,604,false,,Ed R. Levin County Park,update
+814c464f-f092-45e5-8814-46f4faa570c0,d2166fb310ce7480,name+start,0.0,Tularcitos Trail Loop,,3.74,3.74,732.0,810,false,,Ed R. Levin County Park,update
+ab41824f-5cc1-4120-bc80-5668886a1c99,565021abca49ec11,name+start,0.0,Los Coches Loop,,3.11,3.11,765.0,802,false,,Ed R. Levin County Park,update
+0e8a8a93-de8f-47de-8b9e-f26999ec6883,778fe02cf3de572b,name+start,0.0,Mission Peak via Ed R. Levin,,11.74,11.74,2573.0,2751,false,,Ed R. Levin County Park,update
+13874409-4c27-42e0-b304-3c9c998a496c,f40caefe399d6da7,name+start,0.0,Monument Peak Lollipop,,8.02,8.02,2032.0,2154,false,,Ed R. Levin County Park,update
+9d6223ee-2d0c-48a9-8333-3603ef7d6c95,0bdc7891e7a078da,name+start,0.0,Overlook Loop,,1.59,1.59,296.0,308,false,,Ed R. Levin County Park,update
+15fa0d30-dc8a-4af3-8aae-c1b7b62a9522,364b755096577181,name+start,0.0,Spring Valley Loop,,1.61,1.61,257.0,276,false,,Ed R. Levin County Park,update
+0cd603a5-fc4c-48e2-9cab-2c1e45dab813,b44257a6bcebb7e8,name+start,0.0,Spring Valley Pond Loop,,0.41,0.41,9.0,19,true,,Ed R. Levin County Park,update
+a72f4145-1f01-4682-91d5-fc9443bda264,83477cf12aa1a24e,name+start,0.0,Triple Monument CCW,,8.56,8.56,2134.0,2276,false,,Ed R. Levin County Park,update
+7952c395-f0df-4d89-885a-e77a0230e86d,7f71ce78e54ed700,name+start,0.0,Triple Monument CW,,8.66,8.66,2275.0,2340,false,,Ed R. Levin County Park,update
+432b89cd-9afe-4936-8731-c8d6f449dbc0,e2f060917bffa27b,name+start,0.0,Upper Hang Glider Launchpad,,6.42,6.42,1796.0,1887,false,,Ed R. Levin County Park,update
+3f9d448d-79fc-40d4-9b4d-d63dd7d7232a,8ce25ad67e6b7eb6,name+start,0.0,5 Mile Out &amp; Back from Hellyer,5 Mile Out & Back from Hellyer,5.02,5.02,115.0,205,true,,Hellyer County Park,update
+70e01597-9d88-4b30-9f41-f7f7bccd68e9,ce6e59b9f1d6bda3,name+start,0.0,Cottonwood Lake Lap,,0.57,0.57,0.0,2,true,,Hellyer County Park,update
+a3174ffb-97a1-4018-8a06-3e82a6ebb13c,f2cf98fef0307774,name+start,0.0,Hellyer Lap,,0.87,0.87,0.0,6,true,,Hellyer County Park,update
+274a5d7c-49cf-4227-b40a-ad19bbb64de2,d16439867220e109,name+start,0.0,"Down Ridge, Up Sprig",,6.02,6.02,1446.0,1504,false,,Mount Madonna County Park,update
+e135e1cd-2887-48ce-83e4-398b35c3b52e,a0a7924797dd69b4,name+start,0.0,Hellyer Out &amp; Back Mile,Hellyer Out & Back Mile,1.0,1.0,4.0,15,true,,Hellyer County Park,update
+23216867-dcdf-4139-91b6-5a17de92bc33,20014d8761337e05,name+start,0.0,Hellyer to Golf &amp; Back,Hellyer to Golf & Back,20.23,20.23,123.0,408,true,,Hellyer County Park,update
+f9413254-66c5-401e-bf46-e18c38c2b89c,d4ae72c2f780d9a7,name+start,0.0,Hellyer to the End &amp; Back,Hellyer to the End & Back,12.89,12.89,304.0,527,false,,Hellyer County Park,update
+45715251-6612-4018-ad6b-dcb423524a9b,0333ea37f261266d,name+start,0.0,Walk around the Velodrome,,0.73,0.73,30.0,43,true,,Hellyer County Park,update
+c96afc15-d6f6-416a-90b3-ba3aae6a564c,9e729dff17a0342e,name+start,0.0,Bass Lake Lollipop,,2.53,2.53,301.0,329,false,,Joseph D. Grant County Park,update
+8ab6ef9f-5a76-4f18-b03d-ae925eb08c56,8acd5fe34aa64e44,name+start,0.0,Bass Lake Lollipop,,9.07,9.07,1769.0,1830,true,,Joseph D. Grant County Park,update
+6697fabf-a8fc-437d-88a1-7fe356c49937,0595056db9c44d24,name+start,0.0,Big Meadow Loop,,3.73,3.73,384.0,410,true,,Joseph D. Grant County Park,update
+2b173e80-1814-4039-b038-76f65b9de9bb,d9dfd6188a37265e,name+start,0.0,Brush Loop,,4.75,4.75,562.0,607,false,,Joseph D. Grant County Park,update
+f30798c1-6ef3-4821-9bab-d50390fbd503,36b18f328db96c17,name+start,0.0,Canada de Pala Traversal,,8.61,8.61,1612.0,1680,true,,Joseph D. Grant County Park,update
+8d086cf9-e6d1-4680-a091-45efe24effdd,8f041dc76caec063,name+start,0.0,Dairy (Moo) Loop,,3.03,3.03,473.0,503,false,,Joseph D. Grant County Park,update
+a7597f80-84e3-4064-b6ed-0eed1a047fba,b240b5dd1049640d,name+start,0.0,Dutch Flat Loop,,7.53,7.53,1462.0,1501,false,,Joseph D. Grant County Park,update
+211353df-652d-4cbd-bcd9-a7c8378c6d71,af906221e1893e14,name+start,0.0,Dutch Flat to overlook,,3.58,3.58,898.0,910,true,,Joseph D. Grant County Park,update
+2a54f7fb-4e1d-455c-a332-daef21701df1,81986ce0261a6b86,name+start,0.0,Eagle Lake Out &amp; Back,Eagle Lake Out & Back,6.32,6.32,847.0,907,true,,Joseph D. Grant County Park,update
+9a22d848-55a6-438f-aaf5-3b62c4557cb0,834f5409d6f2a33d,name+start,0.0,Old Mine via Sprig,,3.57,3.57,728.0,744,true,,Mount Madonna County Park,update
+6a216528-24ea-47e4-b733-ed59d1de8fae,249e01161f0c17e5,name+start,0.0,Edwards Loop Trail,,6.51,6.51,1276.0,1318,true,,Joseph D. Grant County Park,update
+847f0275-7638-404c-9b2d-70bd5595854c,573668e30607e5b6,name+start,0.0,JDG Climber to Tamien,,10.71,10.71,2521.0,2569,false,,Joseph D. Grant County Park,update
+a31ef9a7-98b4-4a9e-8b26-d00e50e52d7c,d7518ff82a0059be,name+start,0.0,JDG Traversal via Manzanita (to the boundary),,11.74,11.74,1979.0,2073,true,,Joseph D. Grant County Park,update
+24c2881c-9f21-4821-b0e9-d2aedd7f6ad5,5c9a2b29d3d79b3c,name+start,0.0,Meadow Loop,,1.92,1.92,86.0,118,true,,Joseph D. Grant County Park,update
+3980238f-6f7e-467a-a31c-9edf1265a848,73d4a46503e452d9,name+start,0.0,Pala Seca Cabin Lollipop,,10.04,10.04,2078.0,2144,true,,Joseph D. Grant County Park,update
+65b2c87b-c771-438b-af85-6e1431de2e43,ddbde4d787e9f708,name+start,0.0,"Up Yerb, Down Huecos",,5.92,5.92,1315.0,1354,true,,Joseph D. Grant County Park,update
+efa766a6-e3c2-4996-a967-af9555c80bcd,bddfe3cd4a90240d,name+start,0.0,Lexington Reservoir CCW,,7.72,7.72,723.0,841,true,,Lexington Reservoir County Park,update
+807e7eaf-0b21-4c37-86cb-f581b7e4036d,cef0074f8cb6cf57,name+start,0.0,Lexington Reservoir CW,,7.72,7.72,716.0,843,true,true,Lexington Reservoir County Park,update
+adca8df2-d043-4821-8176-4c8d5131b8c3,4423a4a622caec2d,name+start,0.0,Park Loop,,6.24,6.24,1166.0,1212,false,,Mount Madonna County Park,update
+30b37032-a918-43e4-8ec6-bbf9177084e1,9b007e07e403b2fd,name+start,0.0,Camden Pond #1,,1.11,1.11,0.0,20,true,,Los Gatos Creek County Park,update
+a33e6655-d4df-4799-b503-efa2fc0f4487,e27a192a523577d6,name+start,0.0,Camden Ponds 1 &amp; 2,Camden Ponds 1 & 2,1.36,1.36,11.0,28,true,,Los Gatos Creek County Park,update
+7abfd464-e412-4c95-a246-6cfd05dd540c,7c75d5efca459190,name+start,0.0,Dog Park Loop,,0.4,0.4,0.0,5,true,,Los Gatos Creek County Park,update
+75e2c4c0-d950-4bb7-ac48-9b9f5480af2c,be328bcd95c6a190,name+start,0.0,Dog Park to Campbell Park &amp; Back,Dog Park to Campbell Park & Back,2.54,2.54,42.0,61,true,,Los Gatos Creek County Park,update
+8bc48514-50c7-4913-a367-ef290ab4b6f1,e4de579e6d1b5eaf,name+start,0.0,Dog Park to Vasona Bridge &amp; Back,Dog Park to Vasona Bridge & Back,5.48,5.48,77.0,162,false,,Los Gatos Creek County Park,update
+ed25fbe6-b858-4628-89e9-f87b1e0a4345,f3fade89ef5010dd,name+start,0.0,LGCT Loop,,1.97,1.97,20.0,46,true,,Los Gatos Creek County Park,update
+f8a6d0b0-4918-4561-a6d9-c064d4372d81,35e58aa0e08511b2,name+start,0.0,Oka Pond #1,,1.76,1.76,11.0,36,true,,Los Gatos Creek County Park,update
+86870acc-acf6-4421-bd2f-d587089e3644,82acf6ba5c2183e6,name+start,0.0,Oka Ponds Loop,,2.17,2.17,20.0,47,true,,Los Gatos Creek County Park,update
+b54dd15e-71a1-4742-8a05-381e2b989d01,e9b0875f1c0d9dff,name+start,0.0,Black Rd to Overlook,,9.58,9.58,1055.0,1233,true,true,Sanborn County Park,update
+bf399d1c-7962-4877-a55a-7239534444f2,c4e8f58757048a17,name+start,0.0,Mindego Hill,,4.72,4.72,955.0,1035,false,,Russian Ridge Open Space Preserve,update
+2f124734-578f-4ffa-a5d0-f840c923e5f0,32cad7b069a83828,name+start,0.0,MC Walk,,0.6,0.6,0.0,4,false,,Martial Cottle Park,update
+da553de3-f718-4efe-a86d-7d92a0f504f0,ba54b0f97c2902e1,name+start,0.0,Martial Cottle Half Lap,,1.69,1.69,0.0,8,true,,Martial Cottle Park,update
+73c97414-0f71-4cfb-b8d0-cee6c5a091d2,5045f071c3b45508,name+start,0.0,Martial Cottle Half Lap,,1.73,1.73,0.0,10,true,,Martial Cottle Park,update
+2994c19b-df52-4b44-a5e3-3d2f3164cc11,59cc5236e6f98d62,name+start,0.0,Martial Cottle Lap,,2.83,2.83,0.0,17,true,,Martial Cottle Park,update
+245ef4a0-6813-4168-b280-e286ce4e009a,e447909444054f35,name+start,0.0,Alaska-lookin Loop,,5.26,5.26,1306.0,1324,false,,Mount Madonna County Park,update
+53b5baa1-5377-4e8e-97cb-86e0f750a1f5,5f1f08d6d56dab92,name+start,0.0,Amphitheater Loop,,1.54,1.54,328.0,342,false,,Mount Madonna County Park,update
+7e460948-9958-46f1-937c-db03d375936e,92b14fc47d848eb1,name+start,0.0,Rollers,,4.52,4.52,754.0,819,true,,Santa Teresa County Park,update
+329a4d66-ba3f-4827-a97c-27bef13ba334,cfca6f4c01549469,name+start,0.0,Arrowhead Loop,,0.71,0.71,111.0,125,false,,Mount Madonna County Park,update
+703f8490-ff41-491e-b7ce-ea5e93b644e4,46d9ced3e569bcb7,name+start,0.0,Bay Area Ridge Trail,,7.05,7.05,1413.0,1452,true,,Mount Madonna County Park,update
+6ac98e44-3102-4b4a-af58-49a3d855175f,895017f65c966ef2,name+start,0.0,Bayview Loop,,2.73,2.73,461.0,480,false,,Mount Madonna County Park,update
+846fd324-b176-41e4-8fda-525b20677526,2327c1e4d81873ad,name+start,0.0,Blackhawk Canyon Loop,,2.85,2.85,583.0,607,true,,Mount Madonna County Park,update
+41a66180-dbdb-4fbb-853a-53d382f056eb,76f03b2a05bb5642,name+start,0.0,Blue Springs Loop,,3.01,3.01,473.0,511,false,,Mount Madonna County Park,update
+8ea796da-4722-4088-9782-4b2a80d9faec,fc9c0eada1ed4bd6,name+start,0.0,Giant Twins Out &amp; Back,Giant Twins Out & Back,3.52,3.52,626.0,676,false,,Mount Madonna County Park,update
+7544ebba-3d98-4a08-b4e0-e0b0edd4376d,21a06ee40a863f7f,name+start,0.0,Meadow Loop,,1.49,1.49,173.0,184,true,,Mount Madonna County Park,update
+ba6bc4b2-3d2e-4613-aaba-1304d48799cb,f0f42fa2fd7032fd,name+start,0.0,Merry go around Mount Madonna Park,,6.23,6.23,1439.0,1485,false,,Mount Madonna County Park,update
+7531423f-cbc0-47ba-be9f-5f61c6c04a85,0b58294a58196e3f,name+start,0.0,Miller House Loop,,0.35,0.35,33.0,41,true,,Mount Madonna County Park,update
+8f6f9521-bf44-488f-9e49-d83e2646c26f,057eeb2c22017c0f,name+start,0.0,Mount Madonna CW Lap,,9.13,9.13,1759.0,1881,false,,Mount Madonna County Park,update
+ffbab184-1552-4bd7-8561-981b89ae32a8,b4034d209756f5a4,name+start,0.0,Santa Teresa Park Loop,,9.56,9.56,1867.0,1980,true,,Santa Teresa County Park,update
+2fe75e10-1af1-49bd-88ea-ee0d41461bd4,6bc24ab3b81335d1,name+start,0.0,Ridge Loop,,1.59,1.59,313.0,327,false,,Mount Madonna County Park,update
+8db98e46-d78f-46ce-97df-8184bf327e2c,7dfd25743b7fbb71,name+start,0.0,Ridge/Blackhawk via Sprig,,3.38,3.38,862.0,874,false,,Mount Madonna County Park,update
+9f2cb694-69ca-4bd8-9e5f-4bd58a108496,23c96bc5d30e1d06,name+start,0.0,Sprig to Pole Line &amp; Back,Sprig to Pole Line & Back,5.18,5.18,1234.0,1301,false,,Mount Madonna County Park,update
+ca83dc30-a8f2-4419-953d-29f65f8832f9,4f007605eb0494ff,name+start,0.0,Squiggle at Madonna,,6.48,6.48,1236.0,1298,false,,Mount Madonna County Park,update
+b3324424-dcd2-43cd-8fce-3ef4d983fd70,19d790cc28b46dbc,name+start,0.0,Tan Oak Loop,,2.39,2.39,240.0,305,false,,Mount Madonna County Park,update
+c6de30a4-e1ad-4baa-b91f-02e69acfab62,490755c7db698c48,name+start,0.0,Valley View Overlook,,4.01,4.01,560.0,635,false,,Mount Madonna County Park,update
+1362dee4-3256-4df3-81ca-922badd0f03f,b10c96827a1bc49c,name+start,0.0,Watch out for Arrows !,,2.55,2.55,474.0,508,false,,Mount Madonna County Park,update
+1da8da5b-482e-4162-ac90-16ded4247be4,bed8304b994ee6e0,name+start,0.0,Zigging and Zagging,,8.02,8.02,1839.0,1921,false,,Mount Madonna County Park,update
+45386afe-d34d-4592-a556-5db67bab6023,fbb5efcbc539e114,name+start,0.0,Creek Loop,,0.64,0.64,104.0,130,false,true,Sanborn County Park,update
+340925a1-5f83-4682-96d1-19c87e886961,da75bf1d27d45a6c,name+start,0.0,JNT - Black to Skyline,,10.47,10.47,1177.0,1369,true,true,Sanborn County Park,update
+6e22cce7-70db-4a45-a856-81ef325162d5,6b6491b2459f7f3d,name+start,0.0,Lower Madrone Loop,,3.96,3.96,1243.0,1263,false,,Sanborn County Park,update
+a8b5153c-7aae-48ad-b6aa-f2a4639ba57f,44d7d047b90d491c,name+start,0.0,Nature Trail,,0.82,0.82,135.0,143,false,,Sanborn County Park,update
+1b0cf802-e0bb-41d6-bb08-85f037e25064,458ca5084798c85b,name+start,0.0,Parking lot to The Peak,,6.91,6.91,1828.0,1879,false,true,Sanborn County Park,update
+95e7f2fa-e124-4ad1-928c-ee0cf80c9671,f486701f34a8d0cb,name+start,0.0,Peterson Loop,,1.49,1.49,482.0,490,false,,Sanborn County Park,update
+f4d67ad0-1345-4c25-b327-d99758aa4325,b656a3cf75690e0a,name+start,0.0,Sanborn County Park Loop,,4.01,4.01,1339.0,1366,false,,Sanborn County Park,update
+49e9f837-329a-4e57-8f4e-ceaddfed3ae7,c35861868faafd30,name+start,0.0,Sanborn to Castle Rock,,8.33,8.33,1775.0,1907,false,,Sanborn County Park,update
+4c3adc23-62e2-4b68-9b02-614a6c1d3d2c,e43a68e0b254ae85,name+start,0.0,Buena Vista Loop,,3.62,3.62,707.0,774,false,,Almaden Quicksilver County Park,update
+51b8309a-9370-4d9d-9dd4-8c94bba00d99,bbfab06cd930edfc,name+start,0.0,Bull Run via McAbee,,9.01,9.01,1428.0,1503,false,,Almaden Quicksilver County Park,update
+9cf161e6-0b00-4354-b813-24ce167f40e4,3b827958f925efae,name+start,0.0,Sanborn to Lake Ranch,,1.08,1.08,368.0,371,true,true,Sanborn County Park,update
+2c4e0905-b5e7-4623-b613-080ad6ea7526,b280f1720648717d,name+start,0.0,Sanborn to Overlook,,6.8,6.8,1274.0,1396,true,true,Sanborn County Park,update
+670a9157-0bfe-46bd-9822-7e3f0eedc9dc,a375bffece361fd3,name+start,0.0,Sanborn to Quarry Park,,9.67,9.67,1745.0,1957,false,true,Sanborn County Park,update
+f998a324-9af6-40a2-b93e-5558a73e721a,7daa2d59f09e1cee,name+start,0.0,Sanborn to Skyline,,5.34,5.34,1512.0,1553,false,,Sanborn County Park,update
+329c0e2e-aa70-451b-95a1-f30d0d009b4e,f5b18f2dde9799d5,name+start,0.0,Sanborn to The Peak,,7.61,7.61,1429.0,1564,true,true,Sanborn County Park,update
+bbdf6624-2ee9-4124-8268-829a50a156d9,b92bde2b313ffe0b,name+start,0.0,Sanborn to Vernon J Pick,,2.8,2.8,973.0,986,false,true,Sanborn County Park,update
+dbea6138-a960-469c-9a62-168cd0eef2be,ba7d75c3a2d7464d,name+start,0.0,Sanborn to Walden Pond,,1.0,1.0,368.0,373,false,true,Sanborn County Park,update
+614779a7-3cfa-435c-96a9-d8ee03689ac1,becbb1a5ba4ed4df,name+start,0.0,Summit Rock Climb,,10.52,10.52,2284.0,2479,false,,Sanborn County Park,update
+ee2743d5-9dcd-4b4a-9c00-c5754a36bf33,f5c7fac443e1d638,name+start,0.0,Up JNT Down Sanborn,,8.17,8.17,1758.0,1913,false,true,Sanborn County Park,update
+5f9ea0af-5252-4240-89f2-19b8fc8c46b7,e86be7642b53252e,name+start,0.0,Byrne-Milliron Forest,,3.38,3.38,788.0,893,false,,Byrne-Milliron Forest,update
+a09ece82-34fa-44ff-8481-a5454777cee8,400cc27147f4d16b,name+start,0.0,Walden Pond Loop,,1.54,1.54,203.0,235,false,true,Sanborn County Park,update
+6d2fcc22-4545-455e-9d21-e822fef0e652,2cc2c326997ee6bc,name+start,0.0,Welch Hurst Trail,,0.99,0.99,159.0,188,false,true,Sanborn County Park,update
+a1764c7a-6c8b-4781-baaf-eb32c6192ed0,a1a107f84261f78e,name+start,0.0,Bernal Hill Loop,,2.3,2.3,650.0,673,true,,Santa Teresa County Park,update
+af1ab96f-982b-4376-8036-42e8ef9acebb,37fd8b9f7de9a9c9,name+start,0.0,Bernal Hill via Pueblo,,3.69,3.69,832.0,908,true,,Santa Teresa County Park,update
+3cf0384b-bf76-41cd-86df-18b5f5519427,9433236864c73713,name+start,0.0,Bernal Ranch (Historical),,0.43,0.43,24.0,32,true,,Santa Teresa County Park,update
+ab07f52c-1904-4023-9b31-783967921a20,7878d5355386a5de,name+start,0.0,Bernal Ranch Loop,,3.82,3.82,702.0,764,true,,Santa Teresa County Park,update
+c209ba9b-0200-4b4a-be9b-b632a13f8075,4e4770710b53b689,name+start,0.0,Coyote Climber,,3.74,3.74,965.0,1019,true,,Santa Teresa County Park,update
+c3104f59-4ae5-4a88-a3eb-0827c3a15714,20ba599fbf6f4c4e,name+start,0.0,Coyote Peak Loop via Bayliss,,3.72,3.72,995.0,1051,true,,Santa Teresa County Park,update
+5d3026b6-2edc-4286-a406-1075f3d28128,c498025a5dfc5c83,name+start,0.0,Flowered Switchbacks,,2.55,2.55,468.0,501,true,,Santa Teresa County Park,update
+9e873809-33c7-45c2-9f12-63c8a894aec5,cde06b4c61fca99e,name+start,0.0,Harry to Stiles &amp; Back,Harry to Stiles & Back,2.34,2.34,17.0,71,true,,,update
+88fb73f2-4a55-43c5-b857-bc7a85c44d26,9bd3255ff63171cb,name+start,0.0,Harry to Switchbacks,,4.9,4.9,477.0,571,true,,Santa Teresa County Park,update
+d37e8a96-350f-4e75-b6b1-cc46cb6b71fa,6e3641d8f4d4ebaf,name+start,0.0,Meadow Lap,,0.87,0.87,46.0,67,true,,Santa Teresa County Park,update
+b4d329b9-01c9-44bf-a012-6857fe09ba84,c491ab7ec7345dfc,name+start,0.0,Mine Trail Loop,,1.51,1.51,222.0,246,true,,Santa Teresa County Park,update
+088c06c3-8183-4be7-9f38-564d65e0b106,bbe5f813c363dc25,name+start,0.0,Ridge Trail,,1.87,1.87,523.0,535,true,,Santa Teresa County Park,update
+580a4b15-1d3d-4a37-b43e-5ae41c9813c0,c80b733cddfb2ed3,name+start,0.0,Roadkill Loop,,4.15,4.15,879.0,931,true,,Santa Teresa County Park,update
+1b092bc3-a17a-44ec-beb9-82e8e5b3a63f,cbdce4cf27dbfa6a,name+start,0.0,Stiles to Pueblo Loop,,3.19,3.19,343.0,404,true,,Santa Teresa County Park,update
+b8e0ac93-3927-400f-8ecc-5715ff9dc0ca,62bfe437db4628f1,name+start,0.0,Switcherback,,3.04,3.03,580.0,616,true,,Santa Teresa County Park,update
+b05654e4-cc98-4fe9-825c-83ba5f1c3d86,345a5649ec2d01c8,name+start,0.0,Vista Loop,,1.95,1.95,413.0,450,true,,Santa Teresa County Park,update
+b5d45935-332a-46f3-b2fb-f6a20a2bf1d3,15c051f4366975b6,name+start,0.0,Joyce's Bench &amp; Back,Joyce's Bench & Back,4.04,4.04,500.0,600,false,true,Stevens Creek County Park,update
+db54df90-4a01-45be-956e-6aa4d77ddfef,933a2f9daec1a755,name+start,0.0,Loop Trail,,2.37,2.37,128.0,178,false,true,Stevens Creek County Park,update
+fd0642eb-c500-4978-a243-c62ee279acd7,23b0bb01f3881e46,name+start,0.0,Madrone Picnic Area Out &amp; Back,Madrone Picnic Area Out & Back,6.17,6.17,722.0,922,false,true,Stevens Creek County Park,update
+e5f8c7e8-b697-4f3e-916b-2b22fe28e219,f30e746e99f3dc9e,name+start,0.0,Rim Trail Loop,,1.1,1.1,94.0,114,false,true,Stevens Creek County Park,update
+491e7f46-6f3b-4ce1-8980-ba8f1f0fc726,deca69bcf671593b,name+start,0.0,Stevens Canyon Loop,,1.81,1.81,513.0,524,false,,Stevens Creek County Park,update
+36596691-34f9-4a29-b4b5-6bbcfc1e5774,9cf2df18b0752cbe,name+start,0.0,Stevens Canyon via Mt Eden,,2.38,2.38,547.0,573,false,,Stevens Creek County Park,update
+33e11ee4-da5b-4cd6-85a5-837a7a5b70f6,cfe4dc0f029c2bb2,name+start,0.0,Baylands Full Lap,,1.07,1.07,0.0,14,true,,Sunnyvale Baylands Park,update
+fee1084d-d00f-49bc-9093-d95fc4c3f4c2,5f7f616632d8fd69,name+start,0.0,Baylands Rollers,,0.91,0.91,0.0,13,true,,Sunnyvale Baylands Park,update
+a7cd173b-c11a-42d0-bde0-aca5a37dbc1c,924deed4258889a7,name+start,0.0,Baylands to 49ers,,4.56,4.56,84.0,126,true,true,Sunnyvale Baylands Park,update
+e8b30e46-3d87-4047-bf95-6da2a8f5b055,f5a0e1340c898178,name+start,0.0,Trapeze to Bay View,,1.2,1.2,0.0,13,true,,Sunnyvale Baylands Park,update
+664d8ab7-4ce7-4bb5-8b3e-965501a9a1fc,f29969918418b259,name+start,0.0,Grizzly Flat to Stevens Cyn Rd,,7.5,7.5,1624.0,1673,true,false,Upper Stevens Creek County Park,update
+957a8f87-8340-4639-b4c3-45f58575ca52,b1b91ca89dc1917a,name+start,0.0,Saratoga Gap to 9,,3.84,3.84,548.0,651,true,false,Upper Stevens Creek County Park,update
+183e1680-ea08-4026-af02-625d49a70418,fac05a4f632b6db8,name+start,0.0,Table Mountain Loop,,4.94,4.94,1019.0,1082,false,false,Upper Stevens Creek County Park,update
+27e65c05-c706-4e31-acc4-4e38ca64b93d,40d109b3b863b620,name+start,0.0,Upper Stevens + Long Ridge Loop,,9.73,9.73,1894.0,2009,false,false,Upper Stevens Creek County Park,update
+6c586752-dcae-4989-9aaf-a54db1cea568,76f89f924eb7a815,name+start,0.0,Basin Falls,,1.47,1.47,466.0,476,false,true,Uvas Canyon County Park,update
+bde7ea33-bf8a-4db9-ab95-f966ad0c8521,fa4f65adb076cc55,name+start,0.0,Knibbs Knob CLIMB,,5.28,5.28,2065.0,2096,false,true,Uvas Canyon County Park,update
+2eda2a79-ab8a-46e3-9e65-79a457926761,5b0338d459e4ac10,name+start,0.0,Knobcone Climb,,2.16,2.16,793.0,811,false,true,Uvas Canyon County Park,update
+54b24e1b-d72e-4d34-9f58-7da161e8c905,1a67c33167a6f894,name+start,0.0,Old Logging Camp via Alec Cyn,,3.34,3.34,694.0,752,false,true,Uvas Canyon County Park,update
+35e32862-3fcf-4811-bfb2-ac355e014026,825b6e60822671e9,name+start,0.0,Triple Falls Hike,,2.92,2.92,649.0,703,false,true,Uvas Canyon County Park,update
+f6c01130-dca1-4ead-ba17-9c207eb2ecd3,bc1ea042527216a9,name+start,0.0,Uvas Canyon County Park,,5.19,5.19,1154.0,1260,false,true,Uvas Canyon County Park,update
+6e3d1837-d76a-45b0-88d7-43247e9e2d9c,2d62353b936da6e5,name+start,0.0,Uvas Creek Trail,,0.91,0.91,180.0,187,false,true,Uvas Canyon County Park,update
+915aeb1a-b3aa-4db2-a425-d19b294e0c1d,ba443503b071439a,name+start,0.0,Waterfall Loop,,2.9,2.9,727.0,784,false,true,Uvas Canyon County Park,update
+f9cca58b-2209-4061-b2c8-45e773b02dc6,01c342776951562a,name+start,0.0,Billy Jones to Dam,,2.34,2.34,0.0,43,false,,Oak Meadow Park,update
+3e4604b1-817d-4369-97dc-4be5388e103b,29711c7147bbe58c,name+start,0.0,Creek Walk,,1.03,1.03,0.0,22,false,,Vasona Lake County Park,update
+1b958832-fec6-44b6-b724-274121a2393b,c186ecac57369876,name+start,0.0,Dam &amp; Back,Dam & Back,1.81,1.81,0.0,28,true,,Vasona Lake County Park,update
+4ce3e0dc-edf6-4f45-b2d8-e13d26244bc4,747a9f9e6f34c3a9,name+start,0.0,Lake to Reservoir &amp; Back,Lake to Reservoir & Back,7.7,7.7,437.0,580,true,,Vasona Lake County Park,update
+feeff9f6-c51e-4ab4-b150-906cd74a3181,70b3e308424884d1,name+start,0.0,Oak Meadow Park Loop,,0.31,0.31,0.0,10,true,,Oak Meadow Park,update
+c2be3c92-0b1d-48d5-8cd9-a7b04c43f47c,6ff60bee3fb84c5f,name+start,0.0,Playground Loop,,0.34,0.34,0.0,2,false,,Vasona Lake County Park,update
+fabdaae5-6dcd-4462-9e57-9276d29ef804,9d8ea76eac8aa3c8,name+start,0.0,Vasona Figure 8,,1.27,1.27,0.0,27,false,,Vasona Lake County Park,update
+484ed1bb-544f-471d-9f0f-4879b311ca3c,e78e023f23cffa37,name+start,0.0,Vasona to LGCCP,,6.01,6.01,78.0,163,true,,Vasona Lake County Park,update
+3f150980-46a1-46cd-ad2b-ccd684e54d6d,775a77f494764136,name+start,0.0,West Side Vasona,,1.6,1.6,0.0,14,false,,Vasona Lake County Park,update
+430decb3-a43f-4105-967c-852efa0adac6,6f8f4a126b42eb37,name+start,0.0,Lookout - Redwood Loop,,1.69,1.69,437.0,472,true,,Villa Montalvo County Park,update
+c1bd321f-01c9-4095-81f4-2f4e0c7d54a7,74cf59f89344d431,name+start,0.0,Lookout Trail,,1.35,1.35,413.0,435,true,,Villa Montalvo County Park,update
+247c42c2-ab82-4416-b60b-f705814214ed,a0b5dda82996a581,name+start,0.0,Orchard Loop,,0.92,0.92,257.0,285,true,,Villa Montalvo County Park,update
+f856fee4-bb05-446f-9bb0-3a35f5afa947,fa333080a1500ea4,name+start,0.0,"Wikiloc - 10-12-2024, 6 Mile Trail Loop in The Forest of Nisene Marks State Park, Santa Cruz, (California)",,6.34,6.34,1269.0,2041,false,,,update
+88cd8360-3a7e-4533-97e2-09d26ae04cc2,a5ac5cbfdd814b7a,name+start,0.0,Almaden Lake,,1.33,1.33,19.0,42,true,,Almaden Lake Park,update
+438cfb84-66e9-4f3b-aa43-5e15c349a82c,bf561d4e09710230,name+start,0.0,Wikiloc - Almaden Quicksilver County Park,,2.87,2.87,194.0,762,false,,Almaden Quicksilver County Park,update
+2146d7f7-35d8-40ca-918b-889db1208fb1,0f6852d87ed21e7a,name+start,0.0,Wikiloc - Almaden Quicksilver County Park,,6.44,6.44,1398.0,1620,true,,Almaden Quicksilver County Park,update
+d69874aa-c2d2-4b3b-a674-1656f01ad0f6,c517397026ae2e23,name+start,0.0,Wikiloc - Almaden Quicksilver County Park,,10.54,10.54,56.0,1751,true,,Almaden Quicksilver County Park,update
+6cbb7d66-1267-4b7f-95bc-05f3e3105552,c886b7c954d1f676,name+start,0.0,Alviso Loop,,8.8,8.8,0.0,56,false,true,Alviso Marina County Park,update
+69815e7c-b0f6-4338-8727-2d392d7ad11b,a487a89fcb432280,name+start,0.0,Alviso Slough Loop,,8.75,8.75,7.0,59,false,true,Alviso Marina County Park,update
+e01c8710-0e9d-4022-b214-eeb7f6848210,97e3db8c389ef024,name+start,0.0,Bald Peak via Calero,,17.64,17.64,1849.0,2325,false,,Calero County Park,update
+b075e934-6618-4225-884f-507d3286b5c1,16cbeb1edbc31f79,name+start,0.0,Belgatos Park,,3.09,3.09,611.0,638,true,,Belgatos Park,update
+8459232d-5076-4575-ba5c-c9a511d8e978,48fe6b1d7029ca15,name+start,0.0,Big Loop @ Quicksilver,,4.82,4.82,734.0,790,false,,Almaden Quicksilver County Park,update
+51183679-944e-4ceb-8b0f-169a53e0c1f8,1254aad8cfdb7edc,name+start,0.0,Canal Trail,,5.15,5.15,0.0,35,true,,,update
+539924e7-7274-4e1a-a43e-27ae59ec59a4,be28bb732ab3cf56,name+start,0.0,Castle Rock (Bouldering Loop),,1.07,1.07,190.0,212,false,,Castle Rock State Park,update
+cb706363-ddec-4e22-9788-5eb5dc2e588f,7347cc4b36856c90,name+start,0.0,Wikiloc - Cemetery Hidalgo - loop,,5.18,5.18,1248.0,1418,false,,Almaden Quicksilver County Park,update
+b172549d-c53f-4456-b681-4107630db188,adc94b32d3773bab,name+start,0.0,Coyote Peak Loop,,5.03,5.03,1143.0,1213,true,,Santa Teresa County Park,update
+09f51115-adbd-4cf5-8c74-f9afac5f29b6,ae6c23421d9d8816,name+start,0.0,Coyote Peak Loop,,3.59,3.59,700.0,732,true,,Santa Teresa County Park,update
+0fcb8ee1-2071-4650-be1e-b0e36334b085,b8d058b696c30343,name+start,0.0,Coyote Valley Open Space,,3.89,3.89,547.0,650,true,,Coyote Valley Open Space Preserve,update
+33222257-7bdc-4af5-a106-27ffe6e01016,80aa72918aa811b8,name+start,0.0,El Sombroso via Limekiln,,11.17,11.17,2840.0,3003,true,true,Lexington Reservoir County Park,update
+d272db55-73b5-4de1-ae19-38cd197e8527,a207df2abb5b911b,name+start,0.0,El Sombroso via Woods,,11.72,11.72,1879.0,2125,true,false,Sierra Azul Open Space Preserve,update
+09b2ebf9-dc18-4b0b-a5a9-a699b86f722a,0166cd398d61fa49,name+start,0.0,English Camp Loop,,5.01,5.01,767.0,835,true,,Almaden Quicksilver County Park,update
+3d2d321f-8b59-43db-b6a5-1f515c66e27c,d4812fe4a9f4cf5f,name+start,0.0,Figueroa Loop,,3.65,3.65,587.0,621,false,true,Calero County Park,update
+1bf5ee8d-d1b0-457a-9a64-205c2c138b58,5b86be562b08d518,name+start,0.0,Full L.A.C.T,,11.35,11.35,103.0,278,true,,,update
+6b2cd4d9-c2a9-4db9-ba8e-a80755aef1c2,55f80a14180c6df2,name+start,0.0,Wikiloc - Greystone (historical) - Webb Canyon,,5.02,5.02,351.0,1067,false,,Almaden Quicksilver County Park,update
+7fc22caa-4be5-4189-aebc-f4019c8136a5,3d362295616d2335,name+start,0.0,Guadeloupe Oak Grove Flat Loop,,0.75,0.75,34.0,55,false,,Guadalupe Oak Grove Park,update
+ae2f5a0d-16b4-46b5-9149-07df64144a31,20cc197835b95740,name+start,0.0,Guadeloupe Perc Ponds,,3.37,3.37,23.0,76,true,,,update
+6ca01d93-a135-4fdb-a050-696cfe117e94,e5b34c643fc76a83,name+start,0.0,Heintz Open Space,,2.15,2.15,445.0,465,true,,,update
+cc424f45-1bfb-4cda-8988-9f426ca15d93,ea9174647c338b66,name+start,0.0,Hicks to Lexington to Hicks,,23.6,23.6,4815.0,5209,true,false,Sierra Azul Open Space Preserve,update
+05c212c5-e10f-4033-8f1a-74f9d79f82bf,90b7b9f8fd866ec9,name+start,0.0,Hidalgo Cemetery via Hacienda,,5.2,5.2,1289.0,1352,false,,Almaden Quicksilver County Park,update
+fad41c83-a673-4f0f-9a90-225fb5d00cce,d37817b1c9601637,name+start,0.0,Hidalgo Cemetery via McAbee,,11.38,11.38,1798.0,1915,false,,Almaden Quicksilver County Park,update
+e23e62c4-2efe-403e-9f98-afefaf61019c,952501f29c08751e,name+start,0.0,Hidalgo Cemetery via Wood Rd,,3.95,3.95,656.0,700,false,,Almaden Quicksilver County Park,update
+be10f511-bae8-4b30-9001-98600718d5ed,7c5bfebb2c9dafd7,name+start,0.0,John Nicholas,,9.6,9.6,1055.0,1236,true,true,Sanborn County Park,update
+d0e1110b-c884-43d6-a2d7-f24ba6ad2c6f,5ea8c48c30f78dde,name+start,0.0,Kennedy Up &amp; Down,Kennedy Up & Down,8.03,8.03,1943.0,2067,true,true,,update
+a80628be-1cac-4f77-b2e8-a0d6b66e502b,dd95eb05985ecdd6,name+start,0.0,Knibbs Knob,,3.62,3.62,1539.0,1554,false,,Uvas Canyon County Park,update
+f6b45773-2ed6-4f5f-85be-90864fae3b28,256c8e7975e1d355,name+start,0.0,LACT 5k,,3.11,3.11,29.0,82,true,,Almaden Lake Park,update
+59392dab-ca43-4d0f-9de5-d626541866e1,91a12f7eff7cadef,name+start,0.0,Lexington Reservoir,,7.73,7.73,718.0,843,true,true,Lexington Reservoir County Park,update
+ab892fea-d040-4ace-b6bc-645b902de4ee,0adae7d965a54f35,name+start,0.0,LGCT + St Joes,,5.93,5.93,873.0,980,true,true,,update
+943fe610-0b33-4200-82c4-923485b93d4a,eff3112096995a2b,name+start,0.0,Loma Prieta via Uvas Canyon,,10.0,10.0,2483.0,2605,false,,Uvas Canyon County Park,update
+606b443e-2fb6-40c9-8c1a-97da68208f63,252cde71dc80ce46,name+start,0.0,Long Ridge Open Space Preserve,,3.54,3.54,492.0,559,true,false,Long Ridge Open Space Preserve,update
+13f562f5-cae1-495f-84ce-14c0f5d9c9c7,3895394e3b51075d,name+start,0.0,"Long Ridge, Ward Rd Loop",,5.56,5.56,860.0,981,true,true,Upper Stevens Creek County Park,update
+09cb4056-9a0d-47ba-aec6-710f434aded2,c512435800da1109,name+start,0.0,Longwall - Mayfair Loop,,4.23,4.23,693.0,768,true,false,Rancho Cañada del Oro Open Space Preserve,update
+6c60e3f4-fb38-4841-abf7-d70180b99801,8905a5e925f75b98,name+start,0.0,Lower Bear Creek Redwoods,,3.64,3.64,437.0,541,false,false,Bear Creek Redwoods Open Space Preserve,update
