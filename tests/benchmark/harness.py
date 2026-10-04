@@ -192,6 +192,7 @@ def run_query(query: str, preferences: Optional[Dict[str, Any]] = None, pages: i
         result["latency_ms"] = (time.perf_counter() - t0) * 1000.0
         result["response_keys"] = sorted(resp.keys())
         result["explanation"] = next((resp[k] for k in EXPLANATION_KEYS if resp.get(k)), None)
+        result["notice"] = resp.get("notice")
         try:
             result["prefs"] = appmod.read_session_token(resp["session_id"])["prefs"]
         except Exception:
@@ -255,6 +256,12 @@ def evaluate_case(case: Dict[str, Any]) -> Dict[str, Any]:
             hit = any(f["route_id"] in target for f in routes[:TOP_K])
             if not hit:
                 failures.append("no must_include_any route in top 5")
+
+    nc = expect.get("notice_contains")
+    if nc is not None and not res["error"]:
+        notice = res.get("notice") or ""
+        if str(nc) not in notice:
+            failures.append(f"notice missing {nc!r} (got {res.get('notice')!r})")
 
     if infeasible:
         if feasible_ids:

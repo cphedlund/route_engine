@@ -86,6 +86,10 @@ def distance_window_half_width(target_mi: float, relax_level: int = 0) -> float:
         half += DISTANCE_WINDOW["relax_extra_pct"] * t
     return half
 
+DISTANCE_NOTICE = {
+    "narrow_miss_pct": 0.05,
+}
+
 GATE_CONFIG = {
     "wheelchair_paved_gpx_surface": "paved",
     "wheelchair_paved_osm_surfaces": frozenset({"paved", "asphalt", "concrete", "paving_stones"}),
@@ -993,6 +997,22 @@ def select_routes_with_relaxation(
     """
     ranked, notice, _ = select_routes_with_relaxation_steps(routes, preferences, weights=weights)
     return ranked, notice
+
+
+def distance_miss_notice(preferences: Dict[str, Any], returned_distances_mi: List[float]) -> Optional[str]:
+    target = preferences.get("target_miles")
+    if target is None or not returned_distances_mi or float(target) <= 0:
+        return None
+    requested = float(preferences.get("requested_miles") or target)
+    t = float(target)
+    closest = min((float(d) for d in returned_distances_mi), key=lambda d: (abs(d - t), d))
+    if abs(closest - t) <= DISTANCE_NOTICE["narrow_miss_pct"] * t:
+        return None
+    pct = round(DISTANCE_NOTICE["narrow_miss_pct"] * 100)
+    return (
+        f"These routes differ from your requested {requested:g} mi by more than {pct}% "
+        f"(closest: {closest:.1f} mi)."
+    )
 
 
 def proximity_exhausted_notice(preferences: Dict[str, Any], relaxed_steps: List[str]) -> Optional[str]:

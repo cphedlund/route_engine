@@ -5,6 +5,7 @@
 # must_include_any: list of route_ids, or 'auto' = every route in the data satisfying expect.hard.
 # must_exclude_where: python expression over route facts (distance_mi, elev_gain_ft, park, route_type...); a returned route matching it is a violation at any rank.
 # Violation rule: gates (bike, dog, wheelchair, park, route_type, proximity, must_exclude_where) are never excusable; distance/elevation targets are feasible-first (first F results, F = routes satisfying all hard constraints, must satisfy them).
+# expect.notice_contains: substring the response notice must contain.
 # expect.pages: evaluate N paginated pages (batch 3) with the feasible-first rule. infeasible: no route satisfies hard; engine must relax and explain.
 cases:
 - id: reg-empty-001
@@ -1016,21 +1017,23 @@ cases:
       park: Anderson Lake County Park
     infeasible: true
 - id: inf-006
-  category: infeasible
+  category: wheelchair
   query: 15 mile wheelchair accessible flat walk with dog
+  tags:
+  - narrowly-met-distance
   owner: atlas-route-engine
-  xfail:
-    owner: atlas-route-engine
-    reason: "pending Carson's decision: since the distance cap was raised, the engine returns Hellyer to the End & Back (12.89 mi), which is inside its +/-15% window but outside this case's +/-5% band (14.25-15.75), with no notice. Either widen the band and make the case feasible, or have the engine add a 'narrowly met' distance notice"
   expect:
     hard:
       distance_mi:
-      - 14.25
-      - 15.75
+      - 12.75
+      - 17.25
       require_wheelchair: true
       require_dog_allowed: true
       elev_gain_ft_max: FLAT
-    infeasible: true
+    non_empty: true
+    must_include_any:
+    - d4ae72c2f780d9a7
+    notice_contains: differ from your requested 15 mi by more than 5%
 - id: wheel-006
   category: wheelchair
   query: 13 mile wheelchair accessible flat walk with dog

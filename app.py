@@ -22,7 +22,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gpx_loader import load_routes_from_gpx_dir
-from engine import Route, proximity_exhausted_notice, select_routes_with_relaxation_steps
+from engine import Route, distance_miss_notice, proximity_exhausted_notice, select_routes_with_relaxation_steps
 import os
 from fastapi import Header, HTTPException
 
@@ -1440,6 +1440,23 @@ def _with_exhausted_notice(
     return " ".join(parts) if parts else None
 
 
+_ROUTE_MILES_BY_ID: Dict[str, float] = {r.route_id: float(r.distance_miles) for r in ROUTE_DB}
+
+
+def _with_distance_notice(
+    notice: Optional[str],
+    batch: List[Dict[str, Any]],
+    prefs: Dict[str, Any],
+    distance_explicit: bool,
+) -> Optional[str]:
+    if not distance_explicit:
+        return notice
+    miles = [_ROUTE_MILES_BY_ID[i["route_id"]] for i in batch if i.get("route_id") in _ROUTE_MILES_BY_ID]
+    extra = distance_miss_notice(prefs, miles)
+    parts = [n for n in (notice, extra) if n]
+    return " ".join(parts) if parts else None
+
+
 def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     prefs: Dict[str, Any] = body.preferences.model_dump(exclude_none=True) if body.preferences else {}
     weights = prefs.pop("weights", None)
@@ -1465,6 +1482,8 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     if radius_mi is not None:
         prefs["max_proximity"] = min(float(prefs.get("max_proximity", radius_mi)), radius_mi)
 
+    distance_explicit = prefs.get("target_miles") is not None and not (query and _parse_minutes_from_query(query) is not None)
+
     start_new = bool(body.new_search) or not body.session_id
     if start_new:
         session_data = {
@@ -1473,12 +1492,14 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
             "weights": weights,
             "shown": [],
             "relax_level": 0,
+            "distance_explicit": distance_explicit,
         }
     else:
         session_data = read_session_token(body.session_id, max_age_seconds=3600)
         if prefs:
             session_data["prefs"] = prefs
             session_data["weights"] = weights
+            session_data["distance_explicit"] = distance_explicit
 
     session_data.setdefault("created_at", int(time.time()))
     session_data.setdefault("shown", [])
@@ -1509,6 +1530,7 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     remaining = _remaining_recommendable(ranked, shown_set)
     has_more = remaining > 0
     notice = _with_exhausted_notice(notice, has_more, relaxed_prefs, relaxed_steps)
+    notice = _with_distance_notice(notice, batch, session_data["prefs"], bool(session_data.get("distance_explicit")))
 
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
@@ -1564,6 +1586,7 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
     remaining = _remaining_recommendable(ranked, shown_set)
     has_more = remaining > 0
     notice = _with_exhausted_notice(notice, has_more, relaxed_prefs, relaxed_steps)
+    notice = _with_distance_notice(notice, batch, session_data["prefs"], bool(session_data.get("distance_explicit")))
 
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
