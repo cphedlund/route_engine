@@ -35,6 +35,6 @@ def test_bike_legal_is_not_blanket_false_at_quicksilver(raw):
     assert by["Big Loop @ Quicksilver"]["osm_bicycle_legal"] is False
 
 
-def test_bike_flag_matches_no_pct(raw):
+def test_bike_flag_matches_max_run(raw):
     for r in raw:
-        assert r["osm_bicycle_legal"] == (r["osm_bicycle_no_pct"] <= 10.0), r["name"]
+        assert r["osm_bicycle_legal"] == (r["osm_bicycle_no_max_run_m"] < 50.0), r["name"]

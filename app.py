@@ -248,6 +248,7 @@ class RouteIn(BaseModel):
     osm_smoothness: str = ""
     osm_bicycle_legal: bool = True
     osm_bicycle_no_pct: float = 0.0
+    osm_bicycle_no_max_run_m: float = 0.0
     osm_horse_legal: bool = False
     osm_dog_allowed: Optional[bool] = None
     osm_technicality: float = 0.0

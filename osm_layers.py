@@ -7,10 +7,17 @@ indexes for fast point-in-region and nearest-neighbor queries.
 All layers cover Santa Clara County, CA.
 
 Derivation notes (Phase 2 data fixes)
-- osm_bicycle_legal: sampled points are snapped to the nearest line way within 25 m.
-  osm_bicycle_no_pct is the share of snapped samples on ways tagged bicycle=no.
-  The route is bike-legal when that share is <= BICYCLE_NO_MAX_FRACTION. Untagged ways
-  are unknown, not prohibited. Routes with no snapped way default to legal.
+- osm_bicycle_legal: the track is resampled every BICYCLE_SAMPLE_INTERVAL_M (10 m) of
+  haversine track length; each sample is snapped to the nearest line way within 25 m and
+  classed "no" (way tagged bicycle=no), "ok" (any other snapped way) or unsnapped.
+  Each sample represents the track from the midpoint to its previous sample to the
+  midpoint to its next sample. A run is a maximal sequence that starts and ends on "no"
+  samples and contains no "ok" sample; unsnapped samples between two "no" samples do not
+  break the run and their length counts toward it (conservative for a legal gate).
+  osm_bicycle_no_max_run_m is the longest run in meters. The route is NOT bike-legal when
+  that run is >= BICYCLE_NO_MAX_RUN_M. osm_bicycle_no_pct is the share of snapped samples
+  on bicycle=no ways (informational). Untagged ways are unknown, not prohibited. Routes
+  with no snapped way default to legal.
 - osm_park_name: park containing the route start point (osm_park_assignment="start_point");
   otherwise the named protected area containing at least PARK_FOOTPRINT_MIN_FRACTION of
   the track length ("footprint"); otherwise "" with osm_park_assignment="unassigned".
@@ -167,7 +174,10 @@ MTB_SCALE_MAP = {
 
 
 PARK_FOOTPRINT_MIN_FRACTION = 0.5
-BICYCLE_NO_MAX_FRACTION = 0.10
+BICYCLE_NO_MAX_RUN_M = 50.0
+BICYCLE_SAMPLE_INTERVAL_M = 10.0
+BICYCLE_SNAP_RADIUS_M = 25.0
+_EARTH_RADIUS_M = 6_371_008.8
 _LNG_SCALE = math.cos(math.radians(37.2))
 _PARK_GROUPS: Optional[dict] = None
 
@@ -223,6 +233,62 @@ def assign_park_by_footprint(track_points: list[tuple[float, float]]) -> tuple[s
     return best_name, best_frac, best_props
 
 
+def _haversine_m(a: tuple[float, float], b: tuple[float, float]) -> float:
+    lat1, lng1 = map(math.radians, a)
+    lat2, lng2 = map(math.radians, b)
+    h = math.sin((lat2 - lat1) / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin((lng2 - lng1) / 2) ** 2
+    return 2 * _EARTH_RADIUS_M * math.asin(min(1.0, math.sqrt(h)))
+
+
+def resample_track(track_points: list[tuple[float, float]], interval_m: float) -> list[tuple[float, float]]:
+    """(lat, lng) points every interval_m of haversine track length, plus the final vertex."""
+    if len(track_points) < 2:
+        return list(track_points)
+    out = [track_points[0]]
+    carry = 0.0
+    for a, b in zip(track_points, track_points[1:]):
+        d = _haversine_m(a, b)
+        if d <= 0:
+            continue
+        pos = interval_m - carry
+        while pos <= d:
+            t = pos / d
+            out.append((a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])))
+            pos += interval_m
+        carry = (carry + d) % interval_m
+    if out[-1] != track_points[-1]:
+        out.append(track_points[-1])
+    return out
+
+
+def max_bicycle_no_run_m(samples: list[tuple[float, float]], states: list[Optional[str]]) -> float:
+    """
+    Longest contiguous bicycle=no run in meters of track length.
+    states[i] is "no", "ok", or None (unsnapped). Sample i covers half the distance to each neighbour.
+    "ok" ends a run; None between two "no" samples is bridged and counted.
+    """
+    n = len(samples)
+    if n == 0:
+        return 0.0
+    seg = [_haversine_m(samples[i], samples[i + 1]) for i in range(n - 1)]
+    best = run = pending = 0.0
+    in_run = False
+    for i, state in enumerate(states):
+        w = ((seg[i - 1] if i > 0 else 0.0) + (seg[i] if i < n - 1 else 0.0)) / 2
+        if state == "no":
+            run = (run + pending if in_run else 0.0) + w
+            pending = 0.0
+            in_run = True
+            best = max(best, run)
+        elif state is None:
+            if in_run:
+                pending += w
+        else:
+            in_run = False
+            run = pending = 0.0
+    return best
+
+
 def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     """
     Given a list of (lat, lng) points from a GPX track, return aggregate
@@ -239,8 +305,6 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     surface_counts: dict[str, int] = {}
     highway_counts: dict[str, int] = {}
     smoothness_counts: dict[str, int] = {}
-    bicycle_no_samples = 0
-    bicycle_way_samples = 0
     horse_legal = False
     dog_allowed = None  # None = unknown; True/False if explicitly tagged
     sac_samples = []
@@ -259,11 +323,6 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
             highway_counts[highway] = highway_counts.get(highway, 0) + 1
         if smooth := tags.get("smoothness"):
             smoothness_counts[smooth] = smoothness_counts.get(smooth, 0) + 1
-        way = TRAILS.nearest_linear(lat, lng, radius_m=25)
-        if way is not None:
-            bicycle_way_samples += 1
-            if way.get("bicycle") == "no":
-                bicycle_no_samples += 1
         if tags.get("horse") in ("yes", "designated"):
             horse_legal = True
         if (dog_tag := tags.get("dog")) is not None:
@@ -401,11 +460,18 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
     dominant_surface = max(surface_counts, key=surface_counts.get) if surface_counts else "unknown"
     dominant_highway = max(highway_counts, key=highway_counts.get) if highway_counts else "unknown"
     dominant_smoothness = max(smoothness_counts, key=smoothness_counts.get) if smoothness_counts else ""
+    bike_samples = resample_track(track_points, BICYCLE_SAMPLE_INTERVAL_M)
+    bike_states: list[Optional[str]] = []
+    for lat, lng in bike_samples:
+        way = TRAILS.nearest_linear(lat, lng, radius_m=BICYCLE_SNAP_RADIUS_M)
+        bike_states.append(None if way is None else ("no" if way.get("bicycle") == "no" else "ok"))
+    bicycle_way_samples = sum(1 for st in bike_states if st is not None)
+    bicycle_no_samples = sum(1 for st in bike_states if st == "no")
     bicycle_no_pct = (
         round(100 * bicycle_no_samples / bicycle_way_samples, 1) if bicycle_way_samples else 0.0
     )
-    bicycle_legal = (bicycle_no_samples / bicycle_way_samples) <= BICYCLE_NO_MAX_FRACTION \
-        if bicycle_way_samples else True
+    bicycle_no_max_run_m = round(max_bicycle_no_run_m(bike_samples, bike_states), 1)
+    bicycle_legal = bicycle_no_max_run_m < BICYCLE_NO_MAX_RUN_M
     avg_sac = round(sum(sac_samples) / len(sac_samples), 2) if sac_samples else 0
     avg_mtb = round(sum(mtb_samples) / len(mtb_samples), 2) if mtb_samples else 0
     # Combined technicality: prefer mtb scale if present, else sac scale
@@ -417,6 +483,7 @@ def enrich_route(track_points: list[tuple[float, float]]) -> dict:
         "osm_smoothness":            dominant_smoothness,
         "osm_bicycle_legal":         bicycle_legal,
         "osm_bicycle_no_pct":        bicycle_no_pct,
+        "osm_bicycle_no_max_run_m":  bicycle_no_max_run_m,
         "osm_horse_legal":           horse_legal,
         "osm_dog_allowed":           dog_allowed,
         "osm_technicality":          osm_technicality,

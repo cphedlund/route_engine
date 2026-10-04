@@ -524,6 +524,7 @@ def load_routes_from_gpx_dir(gpx_dir: str) -> List[Dict[str, Any]]:
                 "osm_smoothness":            osm_data.get("osm_smoothness", ""),
                 "osm_bicycle_legal":         osm_data.get("osm_bicycle_legal", True),
                 "osm_bicycle_no_pct":        osm_data.get("osm_bicycle_no_pct", 0.0),
+                "osm_bicycle_no_max_run_m":  osm_data.get("osm_bicycle_no_max_run_m", 0.0),
                 "osm_horse_legal":           osm_data.get("osm_horse_legal", False),
                 "osm_dog_allowed":           osm_data.get("osm_dog_allowed", None),
                 "osm_technicality":          osm_data.get("osm_technicality", 0),
