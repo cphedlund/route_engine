@@ -400,9 +400,6 @@ cases:
   category: distance
   query: half marathon trail
   owner: atlas-route-engine
-  xfail:
-    owner: atlas-route-engine
-    reason: "engine distance capped at 10.53 mi (P90), so 'half marathon' (11.1-15.1 mi) is unreachable"
   expect:
     hard:
       distance_mi:

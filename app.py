@@ -351,6 +351,13 @@ _ELEV  = [float(r.elevation_gain) for r in ROUTE_DB]
 MILES_P25 = _percentile(_MILES, 25)
 MILES_P75 = _percentile(_MILES, 75)
 MILES_P90 = _percentile(_MILES, 90)
+MILES_MAX = max(_MILES) if _MILES else 0.0
+
+DISTANCE_LIMITS: Dict[str, float] = {
+    "min_target_miles": 0.5,
+    "cap_over_library_max": 1.1,
+}
+MILES_CAP = round(max(MILES_P90, MILES_MAX * DISTANCE_LIMITS["cap_over_library_max"]), 2)
 ELEV_P25  = _percentile(_ELEV, 25)
 ELEV_P75  = _percentile(_ELEV, 75)
 
@@ -795,7 +802,7 @@ def apply_llm_guardrails(query: str, prefs: Dict[str, Any]) -> Dict[str, Any]:
     if out.get("target_miles") is not None:
         try:
             requested_miles = float(out["target_miles"])
-            out["target_miles"] = round(_clamp(requested_miles, 0.5, float(MILES_P90)), 2)
+            out["target_miles"] = round(_clamp(requested_miles, DISTANCE_LIMITS["min_target_miles"], float(MILES_CAP)), 2)
             if abs(out["target_miles"] - requested_miles) > 0.01:
                 out["requested_miles"] = round(requested_miles, 2)
         except Exception:
@@ -804,9 +811,9 @@ def apply_llm_guardrails(query: str, prefs: Dict[str, Any]) -> Dict[str, Any]:
     if out.get("min_mileage") is not None or out.get("max_mileage") is not None:
         try:
             mn = float(out.get("min_mileage", 0.0) or 0.0)
-            mx = float(out.get("max_mileage", float(MILES_P90)) or float(MILES_P90))
-            mn = _clamp(mn, 0.0, float(MILES_P90))
-            mx = _clamp(mx, 0.0, float(MILES_P90))
+            mx = float(out.get("max_mileage", float(MILES_CAP)) or float(MILES_CAP))
+            mn = _clamp(mn, 0.0, float(MILES_CAP))
+            mx = _clamp(mx, 0.0, float(MILES_CAP))
             if mx < mn:
                 mn, mx = mx, mn
             out["min_mileage"] = round(mn, 2)
@@ -953,7 +960,7 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
         "   - default: ~9:00 min/mile\n"
         "   - fast/tempo/hard: ~8:00 min/mile\n"
         "2) Handle negation: 'not crowded'/'avoid crowds' => crowds_preference='secluded'.\n"
-        "3) Keep target_miles in a reasonable single-run range (1 to 15).\n"
+        "3) Set target_miles to the user's explicit distance without clamping it; the server enforces the distance cap.\n"
         "4) Only use keys in the schema. If unknown, set null.\n"
         "Output MUST match the JSON schema strictly."
     )
@@ -965,6 +972,8 @@ def translate_query_llm(query: str, base_prefs: Dict[str, Any]) -> Dict[str, Any
             "miles_p25": MILES_P25,
             "miles_p75": MILES_P75,
             "miles_p90": MILES_P90,
+            "miles_max": MILES_MAX,
+            "miles_cap": MILES_CAP,
             "elev_p25":  ELEV_P25,
             "elev_p75":  ELEV_P75,
         },

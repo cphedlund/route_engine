@@ -71,6 +71,15 @@ HARD_LIMITS = {
     "relaxed_max_proximity_mi": 500.0,
 }
 
+DISTANCE_WINDOW = {
+    "short_below_mi": 4.0,
+    "short_pct": 0.25,
+    "mid_below_mi": 10.0,
+    "mid_pct": 0.30,
+    "long_pct": 0.15,
+    "relax_extra_pct": 0.10,
+}
+
 GATE_CONFIG = {
     "wheelchair_paved_gpx_surface": "paved",
     "wheelchair_paved_osm_surfaces": frozenset({"paved", "asphalt", "concrete", "paving_stones"}),
@@ -685,14 +694,14 @@ def select_routes(
     target_miles_val = prefs.get("target_miles", None)
     if target_miles_val is not None:
         t = float(target_miles_val)
-        if t < 4.0:
-            window_pct = 0.25
-        elif t < 10.0:
-            window_pct = 0.30
+        if t < DISTANCE_WINDOW["short_below_mi"]:
+            window_pct = DISTANCE_WINDOW["short_pct"]
+        elif t < DISTANCE_WINDOW["mid_below_mi"]:
+            window_pct = DISTANCE_WINDOW["mid_pct"]
         else:
-            window_pct = 0.40
+            window_pct = DISTANCE_WINDOW["long_pct"]
         if relax_level >= 2:
-            window_pct += 0.10
+            window_pct += DISTANCE_WINDOW["relax_extra_pct"]
         lower_bound = t * (1.0 - window_pct)
         upper_bound = t * (1.0 + window_pct)
         filtered = [r for r in candidates if lower_bound <= r.distance_miles <= upper_bound]
