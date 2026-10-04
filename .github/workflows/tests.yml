@@ -1,0 +1,31 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      LLM_TRANSLATION_ENABLED: "0"
+      ROUTE_ENGINE_SESSION_SECRET: ci-dummy-session-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: .python-version
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            tests/requirements-test.txt
+      - run: pip install -r requirements.txt -r tests/requirements-test.txt
+      - run: python -m pytest -q

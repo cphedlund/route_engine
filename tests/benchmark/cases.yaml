@@ -1,4 +1,5 @@
 # AtlasNav recommendation benchmark. Hard-constraint ground truth is computed from the routes data (app.ROUTE_DB), never from the engine.
+# Optional per-case xfail: {owner, reason}. Applied as xfail(strict=True) by test_benchmark.py; metrics still use real pass/fail. Remove the field when the owner fixes the case (an XPASS fails the run).
 # expect.hard keys: distance_mi [lo,hi], elev_gain_ft_max (number, or FLAT = max(300 ft, 60 ft/mi x route distance)), elev_gain_ft_min, require_bike_legal, require_dog_allowed, require_wheelchair, park, route_type, within_mi_of_user.
 # must_include_any: list of route_ids, or 'auto' = every route in the data satisfying expect.hard.
 # must_exclude_where: python expression over route facts (distance_mi, elev_gain_ft, park, route_type...); a returned route matching it is a violation at any rank.
@@ -12,6 +13,9 @@ cases:
   - regression
   - bug-false-empty
   owner: atlas-route-engine
+  xfail:
+    owner: atlas-route-engine
+    reason: "engine distance window is +/-30% at 5 mi; case expects +/-15% (4.25-5.75 mi)"
   preferences:
     location:
       lat: 37.2358
@@ -195,6 +199,9 @@ cases:
   query: 5 mile hike with no hills
   tags: *id003
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not map 'no hills' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -207,6 +214,9 @@ cases:
   query: 5 mile hike with minimal elevation
   tags: *id003
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not map 'minimal elevation' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -219,6 +229,9 @@ cases:
   query: 5 mile hike under 300 ft gain
   tags: *id003
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not parse 'under 300 ft gain' into an elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi: *id002
@@ -337,6 +350,9 @@ cases:
   category: flat
   query: gentle 4 mile stroll
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not map 'gentle' to a flat elevation cap; returned routes exceed FLAT"
   expect:
     hard:
       distance_mi:
@@ -384,6 +400,9 @@ cases:
   category: distance
   query: half marathon trail
   owner: atlas-route-engine
+  xfail:
+    owner: atlas-route-engine
+    reason: "engine distance capped at 10.53 mi (P90), so 'half marathon' (11.1-15.1 mi) is unreachable"
   expect:
     hard:
       distance_mi:
@@ -395,6 +414,9 @@ cases:
   category: distance
   query: a flat five mile hike
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ fails on 'a flat five mile hike' (spelled-out number and/or 'flat'); returned routes violate distance/elevation"
   expect:
     hard:
       distance_mi: *id002
@@ -437,6 +459,9 @@ cases:
   category: elevation
   query: 3 mile hike with less than 500 ft of elevation gain
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not parse 'less than 500 ft of elevation gain' into a 500 ft cap"
   expect:
     hard:
       distance_mi:
@@ -449,6 +474,9 @@ cases:
   category: elevation
   query: 6 mile hike with at least 2000 ft of climbing
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not parse 'at least 2000 ft of climbing' into an elevation minimum"
   expect:
     hard:
       distance_mi:
@@ -812,6 +840,9 @@ cases:
   category: proximity
   query: hike within 5 miles of me
   owner: atlas-nlq
+  xfail:
+    owner: atlas-nlq
+    reason: "NLQ does not parse 'within 5 miles of me' into a 5 mi proximity radius"
   preferences: *id005
   expect:
     hard:

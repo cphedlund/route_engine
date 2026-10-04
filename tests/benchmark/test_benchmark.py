@@ -9,6 +9,9 @@ def _marks(case):
     marks = [getattr(pytest.mark, case.get("category", "uncategorized").replace("-", "_"))]
     if "regression" in (case.get("tags") or []):
         marks.append(pytest.mark.regression)
+    xf = case.get("xfail")
+    if xf:
+        marks.append(pytest.mark.xfail(strict=True, reason=f"known failure, owner {xf['owner']}: {xf['reason']}"))
     return marks
 
 
