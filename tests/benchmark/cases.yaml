@@ -25,6 +25,7 @@ cases:
       - 4.25
       - 5.75
       elev_gain_ft_max: FLAT
+      within_mi_of_user: 12.4
     non_empty: true
     must_include_any: auto
 - id: reg-empty-002
@@ -1013,12 +1014,46 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 12.75
-      - 17.25
+      - 14.25
+      - 15.75
       require_wheelchair: true
       require_dog_allowed: true
       elev_gain_ft_max: FLAT
     infeasible: true
+- id: wheel-006
+  category: wheelchair
+  query: 13 mile wheelchair accessible flat walk with dog
+  owner: atlas-route-engine
+  expect:
+    hard:
+      distance_mi:
+      - 11.05
+      - 14.95
+      require_wheelchair: true
+      require_dog_allowed: true
+      elev_gain_ft_max: FLAT
+    non_empty: true
+    must_include_any:
+    - d4ae72c2f780d9a7
+- id: reg-pagination-prox-001
+  category: proximity
+  query: hike near me
+  tags:
+  - regression
+  - bug-pagination-proximity
+  owner: atlas-route-engine
+  preferences:
+    location:
+      lat: 37.323
+      lng: -122.0322
+      radius_km: 8
+    lat: 37.323
+    lng: -122.0322
+  expect:
+    hard:
+      within_mi_of_user: 4.97
+    pages: 3
+    non_empty: true
 - id: nonsense-001
   category: nonsense
   query: asdfgh
