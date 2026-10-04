@@ -1,5 +1,6 @@
 # AtlasNav recommendation benchmark. Hard-constraint ground truth is computed from the routes data (app.ROUTE_DB), never from the engine.
 # Optional per-case xfail: {owner, reason}. Applied as xfail(strict=True) by test_benchmark.py; metrics still use real pass/fail. Remove the field when the owner fixes the case (an XPASS fails the run).
+# Target-distance bands use the engine window: half-width = max(15% x target, 1 mi) (harness.distance_window); explicit ranges, "under N", and infeasible cases keep their own bands.
 # expect.hard keys: distance_mi [lo,hi], elev_gain_ft_max (number, or FLAT = max(300 ft, 60 ft/mi x route distance)), elev_gain_ft_min, require_bike_legal, require_dog_allowed, require_wheelchair, park, route_type, within_mi_of_user.
 # must_include_any: list of route_ids, or 'auto' = every route in the data satisfying expect.hard.
 # must_exclude_where: python expression over route facts (distance_mi, elev_gain_ft, park, route_type...); a returned route matching it is a violation at any rank.
@@ -13,9 +14,6 @@ cases:
   - regression
   - bug-false-empty
   owner: atlas-route-engine
-  xfail:
-    owner: atlas-route-engine
-    reason: "engine distance window is +/-30% at 5 mi; case expects +/-15% (4.25-5.75 mi)"
   preferences:
     location:
       lat: 37.2358
@@ -26,8 +24,8 @@ cases:
   expect:
     hard:
       distance_mi: &id002
-      - 4.25
-      - 5.75
+      - 4.0
+      - 6.0
       elev_gain_ft_max: FLAT
       within_mi_of_user: 12.4
     non_empty: true
@@ -61,8 +59,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       require_dog_allowed: true
     non_empty: true
     must_include_any: auto
@@ -109,8 +107,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       elev_gain_ft_max: FLAT
     non_empty: true
     must_include_any: auto
@@ -256,8 +254,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       elev_gain_ft_max: FLAT
     pages: 2
     non_empty: true
@@ -293,8 +291,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       elev_gain_ft_max: FLAT
     non_empty: true
     must_include_any: auto
@@ -318,8 +316,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 4.2
-      - 5.75
+      - 3.97
+      - 5.97
       elev_gain_ft_max: FLAT
     non_empty: true
     must_include_any: auto
@@ -331,8 +329,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 5.3
-      - 7.1
+      - 5.21
+      - 7.21
       elev_gain_ft_max: FLAT
     non_empty: true
     must_include_any: auto
@@ -344,8 +342,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 3.4
-      - 4.6
+      - 3.0
+      - 5.0
       elev_gain_ft_max: FLAT
     non_empty: true
     must_include_any: auto
@@ -357,8 +355,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
     non_empty: true
     must_include_any: auto
 - id: dist-002
@@ -379,8 +377,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 1.4
-      - 2.6
+      - 1.0
+      - 3.0
       route_type: loop
     non_empty: true
     must_include_any: auto
@@ -444,8 +442,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       elev_gain_ft_max: 500
     non_empty: true
     must_include_any: auto
@@ -456,8 +454,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 5.1
-      - 6.9
+      - 5.0
+      - 7.0
       elev_gain_ft_min: 2000
     non_empty: true
     must_include_any: auto
@@ -490,8 +488,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       require_dog_allowed: true
       route_type: loop
     non_empty: true
@@ -581,8 +579,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       require_wheelchair: true
     non_empty: true
     must_include_any: auto
@@ -593,8 +591,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 1.4
-      - 2.6
+      - 1.0
+      - 3.0
       require_wheelchair: true
     non_empty: true
     must_include_any: auto
@@ -742,8 +740,8 @@ cases:
     hard:
       park: Sanborn County Park
       distance_mi:
-      - 3.5
-      - 6.5
+      - 4.0
+      - 6.0
     non_empty: true
     must_include_any: auto
 - id: park-015
@@ -808,8 +806,8 @@ cases:
     hard:
       within_mi_of_user: 10
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
     non_empty: true
     must_include_any: auto
 - id: prox-003
@@ -869,8 +867,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       route_type: loop
     non_empty: true
     must_include_any: auto
@@ -881,8 +879,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 5.1
-      - 6.9
+      - 5.0
+      - 7.0
       route_type: out-and-back
     non_empty: true
     must_include_any: auto
@@ -894,8 +892,8 @@ cases:
     hard:
       park: Santa Teresa County Park
       distance_mi:
-      - 2.5
-      - 3.8
+      - 2.0
+      - 4.0
       require_dog_allowed: true
       route_type: loop
     non_empty: true
@@ -907,8 +905,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 3.4
-      - 4.6
+      - 3.0
+      - 5.0
       require_wheelchair: true
       elev_gain_ft_max: FLAT
     non_empty: true
@@ -920,8 +918,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 5.1
-      - 6.9
+      - 5.0
+      - 7.0
       require_bike_legal: true
       require_dog_allowed: true
       elev_gain_ft_max: FLAT
@@ -934,8 +932,8 @@ cases:
   expect:
     hard:
       distance_mi:
-      - 2.25
-      - 3.75
+      - 2.0
+      - 4.0
       route_type: loop
       require_dog_allowed: true
       elev_gain_ft_max: FLAT

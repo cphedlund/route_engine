@@ -33,6 +33,15 @@ FLAT_MAX_GAIN_FT = 300.0
 FLAT_GAIN_FT_PER_MILE = 60.0
 
 
+DISTANCE_WINDOW_PCT = 0.15
+DISTANCE_WINDOW_MIN_MI = 1.0
+
+
+def distance_window(target_mi: float) -> List[float]:
+    half = max(DISTANCE_WINDOW_PCT * float(target_mi), DISTANCE_WINDOW_MIN_MI)
+    return [round(max(0.0, float(target_mi) - half), 2), round(float(target_mi) + half, 2)]
+
+
 def flat_max_gain_ft(distance_mi: float) -> float:
     return max(FLAT_MAX_GAIN_FT, FLAT_GAIN_FT_PER_MILE * float(distance_mi))
 

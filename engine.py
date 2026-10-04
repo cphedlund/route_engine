@@ -73,13 +73,18 @@ HARD_LIMITS = {
 }
 
 DISTANCE_WINDOW = {
-    "short_below_mi": 4.0,
-    "short_pct": 0.25,
-    "mid_below_mi": 10.0,
-    "mid_pct": 0.30,
-    "long_pct": 0.15,
+    "pct": 0.15,
+    "min_half_width_mi": 1.0,
     "relax_extra_pct": 0.10,
 }
+
+
+def distance_window_half_width(target_mi: float, relax_level: int = 0) -> float:
+    t = float(target_mi)
+    half = max(DISTANCE_WINDOW["pct"] * t, DISTANCE_WINDOW["min_half_width_mi"])
+    if relax_level >= 2:
+        half += DISTANCE_WINDOW["relax_extra_pct"] * t
+    return half
 
 GATE_CONFIG = {
     "wheelchair_paved_gpx_surface": "paved",
@@ -691,20 +696,13 @@ def select_routes(
             elif notes is not None:
                 notes.append(f"No {intent_lower} routes matched, so other route shapes are included.")
 
-    # Distance pre-filter — tiered window based on target distance (falls back, with a note)
+    # Distance pre-filter — max(±15%, ±1 mi) window around target distance (falls back, with a note)
     target_miles_val = prefs.get("target_miles", None)
     if target_miles_val is not None:
         t = float(target_miles_val)
-        if t < DISTANCE_WINDOW["short_below_mi"]:
-            window_pct = DISTANCE_WINDOW["short_pct"]
-        elif t < DISTANCE_WINDOW["mid_below_mi"]:
-            window_pct = DISTANCE_WINDOW["mid_pct"]
-        else:
-            window_pct = DISTANCE_WINDOW["long_pct"]
-        if relax_level >= 2:
-            window_pct += DISTANCE_WINDOW["relax_extra_pct"]
-        lower_bound = t * (1.0 - window_pct)
-        upper_bound = t * (1.0 + window_pct)
+        half_width = distance_window_half_width(t, relax_level)
+        lower_bound = max(0.0, t - half_width)
+        upper_bound = t + half_width
         filtered = [r for r in candidates if lower_bound <= r.distance_miles <= upper_bound]
         if filtered:
             candidates = filtered
