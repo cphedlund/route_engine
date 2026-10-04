@@ -14,14 +14,14 @@ from typing import Optional, List, Dict, Literal
 from pydantic import BaseModel, Field
 import osm_layers
 
-load_dotenv(override=True)
+load_dotenv(override=False)
 
 from fastapi import FastAPI, HTTPException, Depends, Header, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gpx_loader import load_routes_from_gpx_dir
-from engine import Route, select_routes_with_relaxation
+from engine import Route, proximity_exhausted_notice, select_routes_with_relaxation_steps
 import os
 from fastapi import Header, HTTPException
 
@@ -30,9 +30,19 @@ from fastapi import Header, HTTPException
 # -----------------------------
 app = FastAPI(title="Route Selection Engine")
 
+def validate_startup_config(environ=None) -> None:
+    env = os.environ if environ is None else environ
+    flag = str(env.get("REQUIRE_API_KEY", "0")).strip().lower() in ("1", "true", "yes", "on")
+    if flag and not str(env.get("ROUTE_ENGINE_API_KEY", "")).strip():
+        raise RuntimeError(
+            "REQUIRE_API_KEY is enabled but ROUTE_ENGINE_API_KEY is missing or empty. "
+            "Set ROUTE_ENGINE_API_KEY or unset REQUIRE_API_KEY."
+        )
+
+
 @app.on_event("startup")
 async def startup_event():
-    pass  # OSM layers now lazy-load via gpx_loader
+    validate_startup_config()
 
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
@@ -56,8 +66,6 @@ app.add_middleware(
 # -----------------------------
 API_KEY = os.getenv("ROUTE_ENGINE_API_KEY", "")
 DEV_MODE = os.getenv("DEV_MODE", "0") == "1"
-
-print("[DEBUG] ROUTE_ENGINE_API_KEY length:", len(API_KEY))
 
 
 def require_api_key(x_api_key: str | None = Header(default=None, alias="X-API-Key")):
@@ -1095,12 +1103,6 @@ def apply_progressive_relaxation(prefs: Dict[str, Any], relax_level: int) -> Dic
         if rl >= 3 and p.get("preferred_surface") and str(p["preferred_surface"]).strip().lower() != "mixed":
             p["preferred_surface"] = "mixed"
 
-    try:
-        base_prox = float(p.get("max_proximity", 20.0))
-        p["max_proximity"] = min(base_prox + 2.0 * rl, base_prox + 10.0)
-    except Exception:
-        pass
-
     return p
 
 
@@ -1195,6 +1197,19 @@ def _location_pref_to_proximity(prefs: Dict[str, Any]) -> Optional[float]:
     return float(radius_km) * KM_TO_MI if radius_km is not None and float(radius_km) > 0 else None
 
 
+def _with_exhausted_notice(
+    notice: Optional[str],
+    has_more: bool,
+    prefs: Dict[str, Any],
+    relaxed_steps: List[str],
+) -> Optional[str]:
+    if has_more:
+        return notice
+    extra = proximity_exhausted_notice(prefs, relaxed_steps)
+    parts = [n for n in (notice, extra) if n]
+    return " ".join(parts) if parts else None
+
+
 def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     prefs: Dict[str, Any] = body.preferences.model_dump(exclude_none=True) if body.preferences else {}
     weights = prefs.pop("weights", None)
@@ -1248,7 +1263,7 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
         int(session_data.get("relax_level", 0) or 0),
     )
 
-    ranked, notice = select_routes_with_relaxation(
+    ranked, notice, relaxed_steps = select_routes_with_relaxation_steps(
         [r.to_engine_route() for r in ROUTE_DB],
         relaxed_prefs,
         weights=session_data.get("weights"),
@@ -1263,6 +1278,7 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
 
     remaining = _remaining_recommendable(ranked, shown_set)
     has_more = remaining > 0
+    notice = _with_exhausted_notice(notice, has_more, relaxed_prefs, relaxed_steps)
 
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
@@ -1302,7 +1318,7 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
     shown_set: Set[str] = set(session_data.get("shown", []) or [])
     relaxed_prefs = apply_progressive_relaxation(session_data["prefs"], int(session_data["relax_level"]))
 
-    ranked, notice = select_routes_with_relaxation(
+    ranked, notice, relaxed_steps = select_routes_with_relaxation_steps(
         [r.to_engine_route() for r in ROUTE_DB],
         relaxed_prefs,
         weights=session_data.get("weights"),
@@ -1317,6 +1333,7 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
 
     remaining = _remaining_recommendable(ranked, shown_set)
     has_more = remaining > 0
+    notice = _with_exhausted_notice(notice, has_more, relaxed_prefs, relaxed_steps)
 
     shown_list = list(shown_set)
     if len(shown_list) > 2000:
