@@ -1352,7 +1352,7 @@ for _r in _RAW_GPX_ROUTES:
     _ID_BY_NAME_KEY.setdefault(_name_key(_r["name"]), _r["route_id"])
 
 
-MAP_PDF_CACHE_MAX_BYTES = int(os.getenv("MAP_PDF_CACHE_MAX_BYTES", str(48 * 1024 * 1024)))
+MAP_PDF_CACHE_MAX_BYTES = int(os.getenv("MAP_PDF_CACHE_MAX_BYTES", str(16 * 1024 * 1024)))
 _MAP_PDF_CACHE: "OrderedDict[str, tuple]" = OrderedDict()
 _MAP_PDF_CACHE_BYTES = 0
 _MAP_PDF_LOCK = threading.Lock()
