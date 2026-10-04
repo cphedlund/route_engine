@@ -21,7 +21,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from gpx_loader import load_routes_from_gpx_dir
-from engine import Route, select_routes
+from engine import Route, select_routes_with_relaxation
 import os
 from fastapi import Header, HTTPException
 
@@ -388,16 +388,25 @@ PARK_ALIASES: Dict[str, str] = {
     "anderson lake": "Anderson Lake County Park",
     "anderson": "Anderson Lake County Park",
     "almaden lake": "Almaden Lake Park",
+    "sierra azul": "Sierra Azul Open Space Preserve",
+    "sierra azul open space preserve": "Sierra Azul Open Space Preserve",
+    "castle rock": "Castle Rock State Park",
+    "castle rock state park": "Castle Rock State Park",
 }
 
 
-def _extract_park_filter(query: str) -> Optional[str]:
+def _extract_park_alias(query: str) -> Optional[str]:
     q = _norm_text(query)
     for alias in sorted(PARK_ALIASES.keys(), key=len, reverse=True):
         pattern = r"(?:^|[^a-z])" + re.escape(alias) + r"(?:[^a-z]|$)"
         if re.search(pattern, q):
-            return PARK_ALIASES[alias]
+            return alias
     return None
+
+
+def _extract_park_filter(query: str) -> Optional[str]:
+    alias = _extract_park_alias(query)
+    return PARK_ALIASES[alias] if alias else None
 
 
 def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -408,6 +417,11 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
         park = _extract_park_filter(query)
         if park:
             prefs["park_filter"] = park
+
+    # Park names are not preference keywords ("Castle Rock" is not rocky, "Quicksilver" is not quick)
+    park_alias = _extract_park_alias(query)
+    if park_alias:
+        q = re.sub(r"(?:^|(?<=[^a-z]))" + re.escape(park_alias) + r"(?=[^a-z]|$)", " ", q)
 
     # Distance: explicit numbers win
     miles_from_text: Optional[float] = None
@@ -446,6 +460,8 @@ def translate_query_rules(query: str, base_prefs: Optional[Dict[str, Any]] = Non
     if prefs.get("max_elevation") is None and prefs.get("target_elevation_gain") is None:
         if _contains_any(q, ["flat", "not steep", "not too steep", "low climb", "low elevation", "gentle", "easy"]):
             prefs["max_elevation"] = round(max(100.0, ELEV_P25), 0)
+            if _contains_any(q, ["flat", "low climb", "low elevation"]):
+                prefs["flat"] = True
         elif _contains_any(q, ["steep", "hilly", "climb", "vert", "mountain"]):
             prefs["target_elevation_gain"] = round(max(300.0, ELEV_P75), 0)
 
@@ -767,7 +783,10 @@ def apply_llm_guardrails(query: str, prefs: Dict[str, Any]) -> Dict[str, Any]:
 
     if out.get("target_miles") is not None:
         try:
-            out["target_miles"] = round(_clamp(float(out["target_miles"]), 0.5, float(MILES_P90)), 2)
+            requested_miles = float(out["target_miles"])
+            out["target_miles"] = round(_clamp(requested_miles, 0.5, float(MILES_P90)), 2)
+            if abs(out["target_miles"] - requested_miles) > 0.01:
+                out["requested_miles"] = round(requested_miles, 2)
         except Exception:
             out.pop("target_miles", None)
 
@@ -1072,14 +1091,6 @@ def apply_progressive_relaxation(prefs: Dict[str, Any], relax_level: int) -> Dic
     p["min_mileage"] = max(0.0, mid - new_half)
     p["max_mileage"] = max(mid + new_half, p["min_mileage"] + 0.1)
 
-    if p.get("max_elevation") is not None:
-        try:
-            base_cap = float(p["max_elevation"])
-            bump = min(2000.0, 250.0 * rl)
-            p["max_elevation"] = base_cap + bump
-        except Exception:
-            pass
-
     if not p.get("allowed_surface_types"):
         if rl >= 3 and p.get("preferred_surface") and str(p["preferred_surface"]).strip().lower() != "mixed":
             p["preferred_surface"] = "mixed"
@@ -1168,9 +1179,29 @@ def route_map_pdf(route_id: str, _: None = Depends(require_api_key)):
 # -----------------------------
 # Core search helper (shared by /start_search and Make ingress)
 # -----------------------------
+KM_TO_MI = 0.621371
+M_TO_FT = 3.28084
+
+
+def _location_pref_to_proximity(prefs: Dict[str, Any]) -> Optional[float]:
+    loc = prefs.get("location")
+    if not isinstance(loc, dict):
+        return None
+    prefs.pop("location", None)
+    if loc.get("lat") is not None and loc.get("lng") is not None:
+        prefs.setdefault("lat", float(loc["lat"]))
+        prefs.setdefault("lng", float(loc["lng"]))
+    radius_km = loc.get("radius_km")
+    return float(radius_km) * KM_TO_MI if radius_km is not None and float(radius_km) > 0 else None
+
+
 def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
     prefs: Dict[str, Any] = body.preferences.model_dump(exclude_none=True) if body.preferences else {}
     weights = prefs.pop("weights", None)
+    radius_mi = _location_pref_to_proximity(prefs)
+    gain_m = prefs.get("elevation_gain_m")
+    if isinstance(gain_m, dict) and gain_m.get("max") is not None:
+        prefs["max_gain_ft"] = round(float(gain_m["max"]) * M_TO_FT, 0)
 
     query = (body.query or "").strip()
 
@@ -1185,6 +1216,9 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
                 prefs = apply_llm_guardrails(query, merged)
 
         prefs = apply_llm_guardrails(query, prefs)
+
+    if radius_mi is not None:
+        prefs["max_proximity"] = min(float(prefs.get("max_proximity", radius_mi)), radius_mi)
 
     start_new = bool(body.new_search) or not body.session_id
     if start_new:
@@ -1214,7 +1248,7 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
         int(session_data.get("relax_level", 0) or 0),
     )
 
-    ranked = select_routes(
+    ranked, notice = select_routes_with_relaxation(
         [r.to_engine_route() for r in ROUTE_DB],
         relaxed_prefs,
         weights=session_data.get("weights"),
@@ -1244,6 +1278,7 @@ def _start_search_core(body: StartSearchBody) -> Dict[str, Any]:
         "min_conformity": used_min_conf,
         "relax_level": band_relax_level,
         "progressive_relax_level": int(session_data.get("relax_level", 0) or 0),
+        "notice": notice,
     }
 
 
@@ -1267,7 +1302,7 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
     shown_set: Set[str] = set(session_data.get("shown", []) or [])
     relaxed_prefs = apply_progressive_relaxation(session_data["prefs"], int(session_data["relax_level"]))
 
-    ranked = select_routes(
+    ranked, notice = select_routes_with_relaxation(
         [r.to_engine_route() for r in ROUTE_DB],
         relaxed_prefs,
         weights=session_data.get("weights"),
@@ -1298,6 +1333,7 @@ def more_results(req: MoreResultsIn, _: None = Depends(require_api_key)):
         "min_conformity": used_min_conf,
         "relax_level": band_relax_level,
         "progressive_relax_level": int(session_data.get("relax_level", 0) or 0),
+        "notice": notice,
     }
 
 

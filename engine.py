@@ -61,6 +61,27 @@ BAND_2_MIN = 55.00
 BAND_3_MIN = 40.00   # below this is not recommended
 
 
+# Hard-constraint thresholds (single source of truth; mirrors tests/benchmark/harness.py)
+HARD_LIMITS = {
+    "flat_max_gain_ft": 300.0,
+    "flat_gain_ft_per_mile": 60.0,
+    "relaxed_max_proximity_mi": 500.0,
+}
+
+
+def flat_max_gain_ft(distance_miles: float) -> float:
+    return max(HARD_LIMITS["flat_max_gain_ft"], HARD_LIMITS["flat_gain_ft_per_mile"] * float(distance_miles))
+
+
+def _elevation_cap_ft(route: "Route", prefs: Dict[str, Any]) -> Optional[float]:
+    caps: List[float] = []
+    if prefs.get("flat"):
+        caps.append(flat_max_gain_ft(route.distance_miles))
+    if prefs.get("max_gain_ft") is not None:
+        caps.append(float(prefs["max_gain_ft"]))
+    return min(caps) if caps else None
+
+
 DEFAULT_WEIGHTS = {
     "mileage":      0.22,
     "elevation":    0.15,
@@ -544,9 +565,11 @@ def select_routes(
     routes: List[Route],
     preferences: Dict[str, Any],
     weights: Optional[Dict[str, float]] = None,
+    notes: Optional[List[str]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Hard constraints first, then soft scoring.
+    If `notes` is given, any fallback that loosens a filter appends a human-readable note.
     Returns list of dicts:
       {route_id, name, conformity_score, score_band, sub_scores, explanation_bits}
     """
@@ -578,7 +601,7 @@ def select_routes(
         if live_prox > (max_prox + prox_overflow):
             continue
 
-        if user_location is not None and str(user_location).strip():
+        if isinstance(user_location, str) and user_location.strip():
             if not _location_match(r.location, str(user_location)):
                 continue
 
@@ -597,7 +620,42 @@ def select_routes(
     if not candidates:
         return []
 
-    # Intent gate — loop / out-and-back hard filter
+    park_filter = prefs.get("park_filter")
+    if park_filter:
+        target = _norm_text(park_filter).replace(".", "").replace(",", "")
+        candidates = [
+            r for r in candidates
+            if _norm_text(r.osm_park_name).replace(".", "").replace(",", "") == target
+        ]
+
+    # ============================================================
+    # OSM HARD GATES (absolute filters, not weighted)
+    # ============================================================
+
+    # Bike-legal gate: exclude routes where OSM marks bicycles=no
+    if prefs.get("require_bike_legal"):
+        candidates = [r for r in candidates if r.osm_bicycle_legal]
+
+    # Dog-required gate: any dog request excludes routes that prohibit dogs
+    if prefs.get("require_dog_allowed") or prefs.get("has_dog"):
+        candidates = [
+            r for r in candidates
+            if r.osm_dog_allowed is not False
+            and r.osm_park_dog_policy != "no"
+        ]
+
+    # Wheelchair / accessibility gate: paved surfaces only
+    if prefs.get("require_wheelchair_accessible"):
+        ACCESSIBLE_SURFACES = {"paved", "asphalt", "concrete", "paving_stones"}
+        candidates = [
+            r for r in candidates
+            if (r.osm_surface in ACCESSIBLE_SURFACES) or (r.surface_type == "paved")
+        ]
+
+    if not candidates:
+        return []
+
+    # Intent gate — loop / out-and-back filter (falls back to all shapes, with a note)
     intent = prefs.get("intent", None)
     if intent:
         intent_lower = intent.strip().lower()
@@ -605,8 +663,10 @@ def select_routes(
             intent_filtered = [r for r in candidates if r.route_type == intent_lower]
             if intent_filtered:
                 candidates = intent_filtered
+            elif notes is not None:
+                notes.append(f"No {intent_lower} routes matched, so other route shapes are included.")
 
-    # Hard distance pre-filter — tiered window based on target distance
+    # Distance pre-filter — tiered window based on target distance (falls back, with a note)
     target_miles_val = prefs.get("target_miles", None)
     if target_miles_val is not None:
         t = float(target_miles_val)
@@ -623,8 +683,19 @@ def select_routes(
         filtered = [r for r in candidates if lower_bound <= r.distance_miles <= upper_bound]
         if filtered:
             candidates = filtered
+        elif notes is not None:
+            notes.append(
+                f"No routes between {lower_bound:.1f} and {upper_bound:.1f} mi matched, "
+                f"so routes outside that range are included."
+            )
 
-    # Bounding-box geographic filter
+    # Hard elevation gate — "flat" rule and explicit numeric caps
+    candidates = [
+        r for r in candidates
+        if _elevation_cap_ft(r, prefs) is None or float(r.elevation_gain) <= _elevation_cap_ft(r, prefs)
+    ]
+
+    # Bounding-box geographic filter (falls back, with a note)
     bbox_min_lat = prefs.get("bbox_min_lat")
     bbox_min_lng = prefs.get("bbox_min_lng")
     bbox_max_lat = prefs.get("bbox_max_lat")
@@ -644,47 +715,15 @@ def select_routes(
         ]
         if bbox_filtered:
             candidates = bbox_filtered
-
-    park_filter = prefs.get("park_filter")
-    if park_filter:
-        target = _norm_text(park_filter).replace(".", "").replace(",", "")
-        candidates = [
-            r for r in candidates
-            if _norm_text(r.osm_park_name).replace(".", "").replace(",", "") == target
-        ]
-
-    if not candidates:
-        return []
-
-    # ============================================================
-    # OSM HARD GATES (absolute filters, not weighted)
-    # ============================================================
-
-    # Bike-legal gate: exclude routes where OSM marks bicycles=no
-    if prefs.get("require_bike_legal"):
-        candidates = [r for r in candidates if r.osm_bicycle_legal]
-
-    # Dog-required gate: exclude routes that prohibit dogs
-    if prefs.get("require_dog_allowed"):
-        candidates = [
-            r for r in candidates
-            if r.osm_dog_allowed is not False
-            and r.osm_park_dog_policy != "no"
-        ]
-
-    # Wheelchair / accessibility gate: paved surfaces only
-    if prefs.get("require_wheelchair_accessible"):
-        ACCESSIBLE_SURFACES = {"paved", "asphalt", "concrete", "paving_stones"}
-        candidates = [
-            r for r in candidates
-            if (r.osm_surface in ACCESSIBLE_SURFACES) or (r.surface_type == "paved")
-        ]
+        elif notes is not None and candidates:
+            notes.append("No routes inside the map area matched, so routes outside it are included.")
 
     if not candidates:
         return []
 
     views_pref = _clamp(float(prefs.get("views_preference", 0.5)), 0.0, 1.0)
-    scenic_offsets_elev = (views_pref >= 0.6)
+    has_elev_limit = bool(prefs.get("flat")) or prefs.get("max_gain_ft") is not None or prefs.get("max_elevation") is not None
+    scenic_offsets_elev = (views_pref >= 0.6) and not has_elev_limit
     scenic_bonus_factor = 0.25
 
     results: List[Dict[str, Any]] = []
@@ -853,3 +892,105 @@ def select_routes(
 
     return results
 
+
+
+# ============================================================
+# RELAX-AND-EXPLAIN (used when hard constraints yield nothing)
+# ============================================================
+
+# Least important first. Safety/legal gates come last and are always called out explicitly.
+RELAXATION_ORDER = ["elevation", "proximity", "park", "dog", "bike", "wheelchair"]
+
+
+def _relax_step(prefs: Dict[str, Any], step: str) -> Optional[str]:
+    """Loosen one constraint in place. Returns the explanation, or None if the constraint is not set."""
+    if step == "elevation":
+        if not prefs.get("flat") and prefs.get("max_gain_ft") is None:
+            return None
+        label = "flat" if prefs.get("flat") else f"{float(prefs['max_gain_ft']):.0f} ft gain"
+        prefs.pop("flat", None)
+        prefs.pop("max_gain_ft", None)
+        return f"No routes met the {label} elevation limit, so routes with more climbing are included."
+    if step == "proximity":
+        if prefs.get("lat") is None or prefs.get("lng") is None:
+            return None
+        limit = float(prefs.get("max_proximity", 20.0))
+        if limit >= HARD_LIMITS["relaxed_max_proximity_mi"]:
+            return None
+        prefs["max_proximity"] = HARD_LIMITS["relaxed_max_proximity_mi"]
+        return f"No routes matched within {limit:.0f} mi of your location, so farther routes are included."
+    if step == "park":
+        park = prefs.pop("park_filter", None)
+        if not park:
+            return None
+        return f"No routes in {park} matched your request, so routes from other parks are shown."
+    if step == "dog":
+        if not prefs.get("has_dog") and not prefs.get("require_dog_allowed"):
+            return None
+        prefs.pop("has_dog", None)
+        prefs.pop("require_dog_allowed", None)
+        return "Safety requirement relaxed: no routes allowing dogs matched, and the routes shown may NOT allow dogs."
+    if step == "bike":
+        if not prefs.get("require_bike_legal"):
+            return None
+        prefs.pop("require_bike_legal", None)
+        return "Legal requirement relaxed: no bike-legal routes matched, and the routes shown may NOT allow bicycles."
+    if step == "wheelchair":
+        if not prefs.get("require_wheelchair_accessible"):
+            return None
+        prefs.pop("require_wheelchair_accessible", None)
+        return "Accessibility requirement relaxed: no wheelchair-accessible routes matched, and the routes shown are NOT verified wheelchair accessible."
+    return None
+
+
+def _apply_relaxations(prefs: Dict[str, Any], steps: List[str]) -> Tuple[Dict[str, Any], List[str]]:
+    p = dict(prefs)
+    notes = [n for n in (_relax_step(p, step) for step in steps) if n]
+    return p, notes
+
+
+def select_routes_with_relaxation(
+    routes: List[Route],
+    preferences: Dict[str, Any],
+    weights: Optional[Dict[str, float]] = None,
+) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    """
+    select_routes, then relax-and-explain if the hard constraints yield nothing.
+    Constraints are relaxed one at a time in RELAXATION_ORDER; afterwards any earlier
+    relaxation that turned out to be unnecessary is restored, so the notice only
+    names constraints that were actually relaxed.
+    Returns (ranked_results, notice). notice is None when nothing was relaxed.
+    """
+    base = dict(preferences or {})
+
+    def run(steps: List[str]) -> Tuple[List[Dict[str, Any]], List[str]]:
+        p, relax_notes = _apply_relaxations(base, steps)
+        fallback_notes: List[str] = []
+        return select_routes(routes, p, weights=weights, notes=fallback_notes), relax_notes + fallback_notes
+
+    steps: List[str] = []
+    ranked, notes = run(steps)
+    for step in RELAXATION_ORDER:
+        if ranked:
+            break
+        if _relax_step(dict(base), step) is None:
+            continue
+        steps.append(step)
+        ranked, notes = run(steps)
+
+    if ranked:
+        for step in list(steps[:-1]):
+            trial = [s for s in steps if s != step]
+            trial_ranked, trial_notes = run(trial)
+            if trial_ranked:
+                steps, ranked, notes = trial, trial_ranked, trial_notes
+    else:
+        notes = ["No routes match this request, even after relaxing every constraint that can be relaxed."]
+
+    requested = base.get("requested_miles")
+    if requested is not None and base.get("target_miles") is not None:
+        notes.insert(0,
+            f"Distance requests are capped at {float(base['target_miles']):g} mi, "
+            f"so routes near {float(base['target_miles']):g} mi are shown instead of {float(requested):g} mi."
+        )
+    return ranked, (" ".join(notes) if notes else None)
